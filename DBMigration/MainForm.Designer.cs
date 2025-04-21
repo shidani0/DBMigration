@@ -2,7 +2,7 @@
 
 namespace DBMigration
 {
-    partial class Form2
+    partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
         private TreeView treeView;
@@ -49,7 +49,7 @@ namespace DBMigration
             this.Controls.Add(this.exportButton);
             this.Name = "Form2";
             this.Text = "Выбор таблиц";
-            this.Load += new System.EventHandler(this.Form2_Load);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
         }
     }

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Windows.Forms;
-using DBMigration;
 
-namespace BDMigration
+namespace DBMigration
 {
-    public partial class Form1 : Form
+    public partial class ConnectionForm : Form
     {
-        public Form1()
+        public ConnectionForm()
         {
             InitializeComponent();
         }
@@ -19,7 +18,7 @@ namespace BDMigration
             string user = txtUser.Text;
             string password = txtPassword.Text;
 
-            Form2 form2 = new Form2(ip, port, dbName, user, password);
+            MainForm form2 = new MainForm(ip, port, dbName, user, password);
             form2.Show();
         }
     }
