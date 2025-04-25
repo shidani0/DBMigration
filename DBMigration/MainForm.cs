@@ -23,6 +23,38 @@ namespace DBMigration
             connectionString = $"Server={ip},{port};Database={dbName};User Id={user};Password={password};MultipleActiveResultSets=True;TrustServerCertificate=True;";
         }
 
+        private void panelResizeMenu_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                isResizing = true;
+                lastMousePosition = e.Location;
+            }
+        }
+
+        private void panelResizeMenu_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isResizing)
+            {
+                int deltaX = e.X - lastMousePosition.X;
+                int newWidth = panelMenu.Width + deltaX;
+
+                // Ограничение по минимальному и максимальному размеру меню
+                if (newWidth >= 100 && newWidth <= 400)
+                {
+                    panelMenu.Width = newWidth;
+                }
+            }
+        }
+
+        private void panelResizeMenu_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                isResizing = false;
+            }
+        }
+
         private void MainForm_Load(object sender, EventArgs e)
         {
             try
@@ -100,7 +132,8 @@ namespace DBMigration
                     treeView.Nodes.Add(scalarFuncsRoot);
                     treeView.Nodes.Add(tableFuncsRoot);
 
-                    treeView.ExpandAll();
+
+                    //treeView.ExpandAll();
                 }
             }
             catch (Exception ex)
@@ -642,6 +675,36 @@ WHERE tab1.name = @tableName;
                 MessageBox.Show("Ошибка при конвертации: " + ex.Message);
             }
         }
+
+        private void btnAnaliz_Click(object sender, EventArgs e)
+        {
+
+
+
+            List<string> selectedItems = GetCheckedItems(treeView.Nodes);
+            AnalizForm formAn = new AnalizForm(selectedItems);
+            formAn.Show();
+
+
+
+        }
+
+        private List<string> GetCheckedItems(TreeNodeCollection nodes)
+        {
+            List<string> checkedItems = new List<string>();
+
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Checked)
+                    checkedItems.Add(node.Text);
+
+                if (node.Nodes.Count > 0)
+                    checkedItems.AddRange(GetCheckedItems(node.Nodes));
+            }
+
+            return checkedItems;
+        }
+
 
     }
 }

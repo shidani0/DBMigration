@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DBMigration
 {
-    public partial class ConnectionForm : Form
+    public partial class test : Form
     {
-        public ConnectionForm()
-        {
-            InitializeComponent();
-        }
         private void panelResizeMenu_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -41,27 +44,9 @@ namespace DBMigration
             }
         }
 
-
-
-        private void btnConnect_Click(object sender, EventArgs e)
+        public test()
         {
-            string ip = txtIp.Text;
-            string port = txtPort.Text;
-            string dbName = txtDbName.Text;
-            string user = txtUser.Text;
-            string password = txtPassword.Text;
-
-            MainForm form2 = new MainForm(ip, port, dbName, user, password);
-
-            form2.StartPosition = FormStartPosition.Manual;
-            form2.Location = this.Location;
-
-            // Показ новой формы
-            form2.Show();
-
-            // Скрыть текущую форму, если нужно
-            this.Hide();
+            InitializeComponent();
         }
-
     }
 }
