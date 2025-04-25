@@ -21,5 +21,6 @@ namespace DBMigration
             MainForm form2 = new MainForm(ip, port, dbName, user, password);
             form2.Show();
         }
+
     }
 }

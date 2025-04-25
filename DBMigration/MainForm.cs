@@ -132,34 +132,6 @@ namespace DBMigration
             }
         }
 
-        private string GetTableCreationScript2(SqlConnection connection, string tableName)
-        {
-            try
-            {
-                // Временно возвращаем заглушку для отладки
-                string script = $"-- Скрипт создания таблицы {tableName} (заглушка)\n";
-
-                // Проверим через информацию о столбцах
-                SqlCommand cmd = new SqlCommand(@"
-            SELECT COLUMN_NAME, DATA_TYPE 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_NAME = @tableName", connection);
-                cmd.Parameters.AddWithValue("@tableName", tableName);
-
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    script += $"-- Столбец: {reader["COLUMN_NAME"]}, Тип: {reader["DATA_TYPE"]}\n";
-                }
-                reader.Close();
-
-                return script;
-            }
-            catch (Exception ex)
-            {
-                return $"Ошибка получения скрипта создания таблицы {tableName}: {ex.Message}";
-            }
-        }
 
         private string GetTableCreationScript(SqlConnection connection, string tableName)
         {
@@ -288,41 +260,6 @@ WHERE tab1.name = @tableName;
         }
 
 
-        private string GetTableCreationScriptSMO(Server server, Database db, string tableName)
-        {
-            try
-            {
-                Table table = db.Tables[tableName, "dbo"]; // Схему можно сделать параметром, если надо
-                if (table == null)
-                    return $"-- Таблица '{tableName}' не найдена в базе данных.";
-
-                Scripter scripter = new Scripter(server)
-                {
-                    Options =
-            {
-                ScriptDrops = false,
-                WithDependencies = false,
-                Indexes = true,
-                DriAll = true,
-                IncludeHeaders = true,
-                SchemaQualify = true,
-                ScriptSchema = true,
-                ScriptData = false
-            }
-                };
-
-                var script = scripter.Script(new Urn[] { table.Urn });
-                return string.Join(Environment.NewLine, script.Cast<string>());
-            }
-            catch (Exception ex)
-            {
-                return $"-- Ошибка SMO при генерации скрипта для таблицы {tableName}: {ex.Message}";
-            }
-        }
-
-
-
-
 
         private string GetTriggerCreationScript(SqlConnection connection, string triggerName)
         {
@@ -402,35 +339,6 @@ WHERE tab1.name = @tableName;
             {
                 return $"-- Ошибка получения процедуры {procedureName}: {ex.Message}";
             }
-        }
-
-        private string GenerateFileNameFromTreeView()
-        {
-            List<string> selectedItems = new List<string>();
-
-            foreach (TreeNode rootNode in treeView.Nodes)
-            {
-                foreach (TreeNode node in rootNode.Nodes)
-                {
-                    if (node.Checked)
-                    {
-                        selectedItems.Add(node.Text);
-                    }
-                }
-            }
-
-            if (selectedItems.Count == 0)
-                return "EmptyExport.sql";
-
-            // Удалим недопустимые символы и ограничим длину
-            string fileName = string.Join("_", selectedItems
-                .Select(name => string.Concat(name.Split(Path.GetInvalidFileNameChars())))
-                .Take(5)); // Ограничим до первых 5 названий
-
-            if (fileName.Length > 50)
-                fileName = fileName.Substring(0, 50);
-
-            return fileName + ".sql";
         }
 
 
@@ -529,7 +437,7 @@ WHERE tab1.name = @tableName;
             }
         }
 
-        private void ExportButton_Click(object sender, EventArgs e)
+        private void exportButton_Click(object sender, EventArgs e)
         {
             try
             {
@@ -542,27 +450,29 @@ WHERE tab1.name = @tableName;
         }
 
 
-        private void ExportButton_Click1(object sender, EventArgs e)
+        private void ConvertToPostgres()
         {
-            try
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                // Получаем параметры подключения
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-                string serverName = builder.DataSource.Split(',')[0]; // IP/имя сервера
-                string port = builder.DataSource.Contains(",") ? builder.DataSource.Split(',')[1] : ""; // порт, если есть
-                string userName = builder.UserID;
-                string password = builder.Password;
-                string dbName = builder.InitialCatalog;
+                connection.Open();
 
-                // Создание подключения для SMO
-                ServerConnection smoConnection = new ServerConnection($"{serverName},{port}", userName, password);
-                string connectionStringSMO = $"Server={serverName},{port};User Id={userName};Password={password};";
-                //connectionString = $"Server={ip},{port};Database={dbName};User Id={user};Password={password};MultipleActiveResultSets=True;TrustServerCertificate=True;";
+                FolderBrowserDialog folderDialog = new FolderBrowserDialog
+                {
+                    Description = "Выберите папку для экспорта SQL-объектов для PostgreSQL"
+                };
 
-                Server smoServer = new Server(connectionStringSMO);
-                Database smoDatabase = smoServer.Databases[dbName];
+                if (folderDialog.ShowDialog() != DialogResult.OK)
+                    return;
 
-                StringBuilder sqlScripts = new StringBuilder();
+                string basePath = folderDialog.SelectedPath;
+                string date = DateTime.Now.ToString("dd-MM-yyyy");
+
+                int tablesCount = 0, funcsCount = 0, procsCount = 0;
+                Dictionary<string, List<(string name, string content)>> grouped = new();
+
+                grouped["Таблицы"] = new List<(string, string)>();
+                grouped["Функции"] = new List<(string, string)>();
+                grouped["Процедуры"] = new List<(string, string)>();
 
                 foreach (TreeNode rootNode in treeView.Nodes)
                 {
@@ -572,144 +482,166 @@ WHERE tab1.name = @tableName;
                         {
                             if (tableNode.Checked)
                             {
-                                sqlScripts.AppendLine($"-- Таблица: {tableNode.Text}");
-                                sqlScripts.AppendLine(GetTableCreationScriptSMO(smoServer, smoDatabase, tableNode.Text));
-                                sqlScripts.AppendLine();
+                                var script = $"-- Таблица: {tableNode.Text}\n" +
+                                             GetPostgresTableScript(connection, tableNode.Text);
+                                grouped["Таблицы"].Add((tableNode.Text, script));
+                                tablesCount++;
 
                                 foreach (TreeNode triggerNode in tableNode.Nodes)
                                 {
                                     if (triggerNode.Checked)
                                     {
-                                        sqlScripts.AppendLine($"-- Триггер: {triggerNode.Text}");
-                                        using (SqlConnection connection = new SqlConnection(connectionString))
-                                        {
-                                            connection.Open();
-                                            sqlScripts.AppendLine(GetTriggerCreationScript(connection, triggerNode.Text));
-                                        }
-                                        sqlScripts.AppendLine();
+                                        var triggerScript = $"-- Триггер: {triggerNode.Text}\n" +
+                                                            GetPostgresTriggerScript(connection, triggerNode.Text);
+                                        grouped["Таблицы"].Add((triggerNode.Text, triggerScript));
                                     }
                                 }
                             }
                         }
                     }
+                    /*
+                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
+                    {
+                        foreach (TreeNode funcNode in rootNode.Nodes)
+                        {
+                            if (funcNode.Checked)
+                            {
+                                var funcScript = GetPostgresFunctionScript(connection, funcNode.Text);
+                                grouped["Функции"].Add((funcNode.Text, funcScript));
+                                funcsCount++;
+                            }
+                        }
+                    }
+                    else if (rootNode.Text == "Процедуры")
+                    {
+                        foreach (TreeNode procNode in rootNode.Nodes)
+                        {
+                            if (procNode.Checked)
+                            {
+                                var procScript = GetPostgresProcedureScript(connection, procNode.Text);
+                                grouped["Процедуры"].Add((procNode.Text, procScript));
+                                procsCount++;
+                            }
+                        }
+                    }
+                    */
                 }
 
-                SaveFileDialog saveFileDialog = new SaveFileDialog
-                {
-                    Filter = "SQL Files|*.sql",
-                    Title = "Сохранить SQL-скрипт"
-                };
+                string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
+                string exportFolderPath = Path.Combine(basePath, folderName);
+                Directory.CreateDirectory(exportFolderPath);
 
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                foreach (var group in grouped)
                 {
-                    File.WriteAllText(saveFileDialog.FileName, sqlScripts.ToString());
-                    MessageBox.Show("SQL скрипт успешно сохранён!");
+                    foreach (var (name, script) in group.Value)
+                    {
+                        string safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars()));
+                        string filePath = Path.Combine(exportFolderPath, $"PG_{safeName}__{date}.sql");
+                        File.WriteAllText(filePath, script);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при экспорте: " + ex.Message);
+
+                MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
             }
         }
 
-        private void ExportButton_Click2(object sender, EventArgs e)
+
+        private string GetPostgresTableScript(SqlConnection connection, string tableName)
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                string script = "-- PostgreSQL скрипт создания таблицы\n";
+
+                // Получаем данные о колонках таблицы
+                string tableScriptQuery = @"
+        SELECT 
+            COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
+            IS_NULLABLE, NUMERIC_PRECISION, NUMERIC_SCALE 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = @tableName";
+
+                using (SqlCommand cmd = new SqlCommand(tableScriptQuery, connection))
                 {
-                    connection.Open();
-                    StringBuilder sqlScripts = new StringBuilder();
+                    cmd.Parameters.AddWithValue("@tableName", tableName);
+                    SqlDataReader reader = cmd.ExecuteReader();
 
-                    foreach (TreeNode rootNode in treeView.Nodes)
+                    var columns = new List<string>();
+                    while (reader.Read())
                     {
-                        // --- ТАБЛИЦЫ И ТРИГГЕРЫ ---
-                        if (rootNode.Text == "Таблицы")
+                        string columnDef = $"{reader["COLUMN_NAME"]} {ConvertToPostgresType(reader)}";
+                        if (reader["IS_NULLABLE"].ToString() == "NO")
                         {
-                            foreach (TreeNode tableNode in rootNode.Nodes)
-                            {
-                                if (tableNode.Checked)
-                                {
-                                    sqlScripts.AppendLine($"-- Таблица: {tableNode.Text}");
-                                    sqlScripts.AppendLine(GetTableCreationScript(connection, tableNode.Text));
-                                    sqlScripts.AppendLine();
-
-                                    foreach (TreeNode triggerNode in tableNode.Nodes)
-                                    {
-                                        if (triggerNode.Checked)
-                                        {
-                                            sqlScripts.AppendLine($"-- Триггер: {triggerNode.Text}");
-                                            sqlScripts.AppendLine(GetTriggerCreationScript(connection, triggerNode.Text));
-                                            sqlScripts.AppendLine();
-                                        }
-                                    }
-                                }
-                            }
+                            columnDef += " NOT NULL";
                         }
-
-                        // --- СКАЛЯРНЫЕ ФУНКЦИИ ---
-                        else if (rootNode.Text == "Скалярные функции")
-                        {
-                            foreach (TreeNode funcNode in rootNode.Nodes)
-                            {
-                                if (funcNode.Checked)
-                                {
-                                    sqlScripts.AppendLine($"-- Скалярная функция: {funcNode.Text}");
-                                    sqlScripts.AppendLine(GetFunctionScript(connection, funcNode.Text));
-                                    sqlScripts.AppendLine();
-                                }
-                            }
-                        }
-
-                        // --- ТАБЛИЧНЫЕ ФУНКЦИИ ---
-                        else if (rootNode.Text == "Табличные функции")
-                        {
-                            foreach (TreeNode funcNode in rootNode.Nodes)
-                            {
-                                if (funcNode.Checked)
-                                {
-                                    sqlScripts.AppendLine($"-- Табличная функция: {funcNode.Text}");
-                                    sqlScripts.AppendLine(GetFunctionScript(connection, funcNode.Text));
-                                    sqlScripts.AppendLine();
-                                }
-                            }
-                        }
-
-                        // --- ПРОЦЕДУРЫ ---
-                        else if (rootNode.Text == "Процедуры")
-                        {
-                            foreach (TreeNode procNode in rootNode.Nodes)
-                            {
-                                if (procNode.Checked)
-                                {
-                                    sqlScripts.AppendLine($"-- Процедура: {procNode.Text}");
-                                    sqlScripts.AppendLine(GetProcedureScript(connection, procNode.Text));
-                                    sqlScripts.AppendLine();
-                                }
-                            }
-                        }
+                        columns.Add(columnDef);
                     }
+                    reader.Close();
 
-                    string defaultFileName = GenerateFileNameFromTreeView();
-
-                    SaveFileDialog saveFileDialog = new SaveFileDialog
-                    {
-                        Filter = "SQL Files|*.sql",
-                        Title = "Save SQL Script",
-                        FileName = defaultFileName
-                    };
-
-                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        File.WriteAllText(saveFileDialog.FileName, sqlScripts.ToString());
-                        MessageBox.Show("SQL скрипт сохранен!");
-                    }
+                    script += $"CREATE TABLE {tableName} (\n" + string.Join(",\n", columns) + "\n);";
                 }
+
+                return script;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка при экспорте: " + ex.Message);
+                return $"-- Ошибка генерации скрипта для таблицы {tableName}: {ex.Message}\n";
             }
         }
+
+        private string ConvertToPostgresType(SqlDataReader reader)
+        {
+            string dataType = reader["DATA_TYPE"].ToString();
+
+            switch (dataType)
+            {
+                case "varchar":
+                case "nvarchar":
+                    return $"{dataType}({reader["CHARACTER_MAXIMUM_LENGTH"]})";
+                case "decimal":
+                case "numeric":
+                    return $"{dataType}({reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]})";
+                default:
+                    return dataType;
+            }
+        }
+
+        private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
+        {
+            try
+            {
+                string script = "-- PostgreSQL скрипт триггера\n";
+                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID('{triggerName}'))", connection);
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    // Конвертация текста триггера в PostgreSQL формат
+                    script += reader.GetString(0).Replace("INSERTED", "NEW")
+                                                .Replace("DELETED", "OLD");
+                }
+                reader.Close();
+
+                return script;
+            }
+            catch (Exception ex)
+            {
+                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}\n";
+            }
+        }
+
+
+
+        private void convertToPostgresButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ConvertToPostgres();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при конвертации: " + ex.Message);
+            }
+        }
+
     }
 }
