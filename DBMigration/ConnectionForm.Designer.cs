@@ -21,13 +21,6 @@ namespace DBMigration
         private TextBox txtPassword;
         private Button btnConnect;
 
-
-        private Label label4;
-        private Label label3;
-        private Label label2;
-        private Label label1;
-        private Label lblPanelMenuConnectionFrom;
-
         private Panel panelResizeMenu;
         private bool isResizing = false;
         private Point lastMousePosition;
@@ -59,15 +52,13 @@ namespace DBMigration
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnConnect = new System.Windows.Forms.Button();
             this.panelMenu = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
             this.btnAction = new System.Windows.Forms.Button();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
             this.label5 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelMenu.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.SuspendLayout();
@@ -194,8 +185,6 @@ namespace DBMigration
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelMenu.Controls.Add(this.label4);
-            this.panelMenu.Controls.Add(this.label3);
             this.panelMenu.Controls.Add(this.label2);
             this.panelMenu.Controls.Add(this.label1);
             this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
@@ -205,56 +194,6 @@ namespace DBMigration
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(277, 544);
             this.panelMenu.TabIndex = 2;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label4.Location = new System.Drawing.Point(4, 169);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(224, 18);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "1. Подключение к искомой БД";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label3.Location = new System.Drawing.Point(4, 137);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(224, 18);
-            this.label3.TabIndex = 3;
-            this.label3.Text = "1. Подключение к искомой БД";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label2.Location = new System.Drawing.Point(3, 105);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(224, 18);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "1. Подключение к искомой БД";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label1.Location = new System.Drawing.Point(3, 41);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(207, 36);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
-            // 
-            // lblPanelMenuConnectionFrom
-            // 
-            this.lblPanelMenuConnectionFrom.AutoSize = true;
-            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(11, 8);
-            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
-            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(257, 18);
-            this.lblPanelMenuConnectionFrom.TabIndex = 0;
-            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к исходной БД";
             // 
             // panelContent
             // 
@@ -312,6 +251,36 @@ namespace DBMigration
             this.label5.TabIndex = 11;
             this.label5.Text = "Подключение к исходной БД";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label2.Location = new System.Drawing.Point(3, 68);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(199, 60);
+            this.label2.TabIndex = 6;
+            this.label2.Text = "2.1.Сравнения структуры\nобъектов исходной\nи целевой БД";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label1.Location = new System.Drawing.Point(3, 28);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(223, 40);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
+            // 
+            // lblPanelMenuConnectionFrom
+            // 
+            this.lblPanelMenuConnectionFrom.AutoSize = true;
+            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))));
+            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(11, 7);
+            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
+            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(251, 18);
+            this.lblPanelMenuConnectionFrom.TabIndex = 4;
+            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
+            // 
             // ConnectionForm
             // 
             this.ClientSize = new System.Drawing.Size(753, 544);
@@ -333,5 +302,8 @@ namespace DBMigration
         #endregion
 
         private Label label5;
+        private Label label2;
+        private Label label1;
+        private Label lblPanelMenuConnectionFrom;
     }
 }

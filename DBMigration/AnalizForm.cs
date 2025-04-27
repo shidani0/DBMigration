@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace DBMigration
 {
@@ -49,15 +50,15 @@ namespace DBMigration
         private Dictionary<string, string> originalScripts;
         private string connectionString;
 
-        public AnalizForm(List<string> items)
+        public AnalizForm(Dictionary<string, string> scripts, string connStr)
         {
             InitializeComponent();
-            selectedItems = items;
+            originalScripts = scripts;
+            connectionString = connStr;
 
-            // Пример: отобразим в ListBox
-            foreach (var item in selectedItems)
+            foreach (var key in originalScripts.Keys)
             {
-                listBox1.Items.Add(item);
+                listBox1.Items.Add(key);
             }
         }
 
@@ -75,13 +76,61 @@ namespace DBMigration
             }
         }
 
+        private string GetPostgresScript(string tableName)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    // Предположим, метод GetPostgresTableScript уже есть и принимает SqlConnection
+                    MainForm dummy = new MainForm("", "", "", "", ""); // или вынести метод в утилиту
+                    var postgresScript = dummy.GetType()
+                        .GetMethod("GetPostgresTableScript", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        .Invoke(dummy, new object[] { connection, tableName })?.ToString();
+
+                    return postgresScript ?? "-- Не удалось получить PostgreSQL скрипт.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Ошибка получения PostgreSQL скрипта: {ex.Message}";
+            }
+        }
+
+
         // Пример метода, возвращающего текст с информацией
         private string GetItemChangeInfo(string itemName)
         {
-            // Здесь можно реализовать анализ изменений для таблицы/процедуры/функции
-            // Сейчас просто пример текста
-            return $"Изменения для элемента: {itemName}\n\n— Структура изменилась\n— Были добавлены триггеры";
+            string originalScript = originalScripts[itemName];
+            string postgresScript = GetPostgresScript(itemName);
+
+            // Простейшее сравнение
+            if (originalScript == postgresScript)
+                return $"Элемент {itemName} не изменён.";
+
+            return $"Изменения для {itemName}:\n\n" +
+                   $"[Оригинал SQL Server]:\n{originalScript}\n\n" +
+                   $"[PostgreSQL]:\n{postgresScript}";
         }
+
+        private void convertToPostgresButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void exportButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ExportEachObjectToFolder();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при экспорте: " + ex.Message);
+            }
+        }
+
 
 
     }

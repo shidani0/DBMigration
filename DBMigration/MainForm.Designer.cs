@@ -7,18 +7,11 @@ namespace DBMigration
     {
         private System.ComponentModel.IContainer components = null;
         private TreeView treeView;
-        private Button exportButton;
-        private Button convertToPostgresButton;
-
-        private Label lblPanelMenuConnectionFrom;
 
         private Panel panelResizeMenu;
         private bool isResizing = false;
         private Point lastMousePosition;
-
-        private System.Windows.Forms.Panel panelMenu;
         private System.Windows.Forms.Panel panelContent;
-        private System.Windows.Forms.Button btnAction;
 
         protected override void Dispose(bool disposing)
         {
@@ -31,59 +24,28 @@ namespace DBMigration
 
         private void InitializeComponent()
         {
-            this.panelMenu = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
-            this.convertToPostgresButton = new System.Windows.Forms.Button();
-            this.exportButton = new System.Windows.Forms.Button();
+            this.lblProgress = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.btnExport = new System.Windows.Forms.Button();
             this.treeView = new System.Windows.Forms.TreeView();
-            this.btnAction = new System.Windows.Forms.Button();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
-            this.btnAnaliz = new System.Windows.Forms.Button();
-            this.panelMenu.SuspendLayout();
+            this.process1 = new System.Diagnostics.Process();
+            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.panelMenu = new System.Windows.Forms.Panel();
             this.panelContent.SuspendLayout();
+            this.panelMenu.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // panelMenu
-            // 
-            this.panelMenu.BackColor = System.Drawing.Color.LightGray;
-            this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelMenu.Controls.Add(this.label1);
-            this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
-            this.panelMenu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panelMenu.Location = new System.Drawing.Point(0, 0);
-            this.panelMenu.Name = "panelMenu";
-            this.panelMenu.Size = new System.Drawing.Size(256, 544);
-            this.panelMenu.TabIndex = 2;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))));
-            this.label1.Location = new System.Drawing.Point(18, 27);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(233, 36);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
-            // 
-            // lblPanelMenuConnectionFrom
-            // 
-            this.lblPanelMenuConnectionFrom.AutoSize = true;
-            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(4, 9);
-            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
-            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(224, 18);
-            this.lblPanelMenuConnectionFrom.TabIndex = 0;
-            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
             // 
             // panelContent
             // 
             this.panelContent.BackColor = System.Drawing.Color.White;
             this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelContent.Controls.Add(this.btnAnaliz);
-            this.panelContent.Controls.Add(this.convertToPostgresButton);
-            this.panelContent.Controls.Add(this.exportButton);
+            this.panelContent.Controls.Add(this.lblProgress);
+            this.panelContent.Controls.Add(this.progressBar);
+            this.panelContent.Controls.Add(this.btnExport);
             this.panelContent.Controls.Add(this.treeView);
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
@@ -92,27 +54,31 @@ namespace DBMigration
             this.panelContent.Size = new System.Drawing.Size(497, 544);
             this.panelContent.TabIndex = 1;
             // 
-            // convertToPostgresButton
+            // lblProgress
             // 
-            this.convertToPostgresButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.convertToPostgresButton.Location = new System.Drawing.Point(253, 444);
-            this.convertToPostgresButton.Name = "convertToPostgresButton";
-            this.convertToPostgresButton.Size = new System.Drawing.Size(231, 33);
-            this.convertToPostgresButton.TabIndex = 2;
-            this.convertToPostgresButton.Text = "Конвертировать в PG";
-            this.convertToPostgresButton.UseVisualStyleBackColor = true;
-            this.convertToPostgresButton.Click += new System.EventHandler(this.convertToPostgresButton_Click);
+            this.lblProgress.AutoSize = true;
+            this.lblProgress.Location = new System.Drawing.Point(24, 485);
+            this.lblProgress.Name = "lblProgress";
+            this.lblProgress.Size = new System.Drawing.Size(51, 20);
+            this.lblProgress.TabIndex = 5;
+            this.lblProgress.Text = "label3";
             // 
-            // exportButton
+            // progressBar
             // 
-            this.exportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.exportButton.Location = new System.Drawing.Point(232, 400);
-            this.exportButton.Name = "exportButton";
-            this.exportButton.Size = new System.Drawing.Size(252, 38);
-            this.exportButton.TabIndex = 1;
-            this.exportButton.Text = "Экспортировать SQL скрипты";
-            this.exportButton.UseVisualStyleBackColor = true;
-            this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
+            this.progressBar.Location = new System.Drawing.Point(19, 508);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(465, 23);
+            this.progressBar.TabIndex = 4;
+            // 
+            // btnExport
+            // 
+            this.btnExport.Location = new System.Drawing.Point(315, 464);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(169, 38);
+            this.btnExport.TabIndex = 3;
+            this.btnExport.Text = "Экспорт";
+            this.btnExport.UseVisualStyleBackColor = true;
+            this.btnExport.Click += new System.EventHandler(this.btnAnaliz_Click);
             // 
             // treeView
             // 
@@ -120,21 +86,11 @@ namespace DBMigration
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.treeView.CheckBoxes = true;
-            this.treeView.Location = new System.Drawing.Point(19, 9);
+            this.treeView.Location = new System.Drawing.Point(10, 17);
             this.treeView.Name = "treeView";
             this.treeView.Size = new System.Drawing.Size(411, 385);
             this.treeView.TabIndex = 0;
             this.treeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterCheck);
-            // 
-            // btnAction
-            // 
-            this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAction.Location = new System.Drawing.Point(653, 494);
-            this.btnAction.Name = "btnAction";
-            this.btnAction.Size = new System.Drawing.Size(80, 30);
-            this.btnAction.TabIndex = 0;
-            this.btnAction.Text = "OK";
-            this.btnAction.UseVisualStyleBackColor = true;
             // 
             // panelResizeMenu
             // 
@@ -149,34 +105,82 @@ namespace DBMigration
             this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
             this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
             // 
-            // btnAnaliz
+            // process1
             // 
-            this.btnAnaliz.Location = new System.Drawing.Point(19, 493);
-            this.btnAnaliz.Name = "btnAnaliz";
-            this.btnAnaliz.Size = new System.Drawing.Size(169, 38);
-            this.btnAnaliz.TabIndex = 3;
-            this.btnAnaliz.Text = "Проверка/анализ";
-            this.btnAnaliz.UseVisualStyleBackColor = true;
-            this.btnAnaliz.Click += new System.EventHandler(this.btnAnaliz_Click);
+            this.process1.StartInfo.Domain = "";
+            this.process1.StartInfo.LoadUserProfile = false;
+            this.process1.StartInfo.Password = null;
+            this.process1.StartInfo.StandardErrorEncoding = null;
+            this.process1.StartInfo.StandardOutputEncoding = null;
+            this.process1.StartInfo.UserName = "";
+            this.process1.SynchronizingObject = this;
+            // 
+            // lblPanelMenuConnectionFrom
+            // 
+            this.lblPanelMenuConnectionFrom.AutoSize = true;
+            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(3, 8);
+            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
+            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(239, 20);
+            this.lblPanelMenuConnectionFrom.TabIndex = 4;
+            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))));
+            this.label1.Location = new System.Drawing.Point(11, 28);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(233, 36);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label2.Location = new System.Drawing.Point(3, 68);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(199, 60);
+            this.label2.TabIndex = 6;
+            this.label2.Text = "2.1.Сравнения структуры\nобъектов исходной\nи целевой БД";
+            // 
+            // panelMenu
+            // 
+            this.panelMenu.BackColor = System.Drawing.Color.LightGray;
+            this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMenu.Controls.Add(this.label2);
+            this.panelMenu.Controls.Add(this.label1);
+            this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
+            this.panelMenu.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panelMenu.Location = new System.Drawing.Point(0, 0);
+            this.panelMenu.Name = "panelMenu";
+            this.panelMenu.Size = new System.Drawing.Size(256, 544);
+            this.panelMenu.TabIndex = 2;
             // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(753, 544);
             this.Controls.Add(this.panelResizeMenu);
-            this.Controls.Add(this.btnAction);
             this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panelMenu);
             this.Name = "MainForm";
-            this.Text = "Выбор таблиц 22";
+            this.Text = "Выбор таблиц";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.panelContent.ResumeLayout(false);
+            this.panelContent.PerformLayout();
             this.panelMenu.ResumeLayout(false);
             this.panelMenu.PerformLayout();
-            this.panelContent.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
-
+        private Button btnExport;
+        private ProgressBar progressBar;
+        private Label lblProgress;
+        private System.Diagnostics.Process process1;
+        private Panel panelMenu;
+        private Label label2;
         private Label label1;
-        private Button btnAnaliz;
+        private Label lblPanelMenuConnectionFrom;
     }
 }

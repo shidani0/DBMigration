@@ -9,6 +9,7 @@ using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Sdk.Sfc;
 using System.Linq;
+using System.Threading.Tasks;
 
 
 namespace DBMigration
@@ -55,23 +56,47 @@ namespace DBMigration
             }
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        private async void MainForm_Load(object sender, EventArgs e)
+        {
+            progressBar.Visible = true;
+            lblProgress.Visible = true;
+            treeView.Visible = true;
+            btnExport.Visible = false;
+
+
+            await LoadTreeViewAsync();
+
+            progressBar.Visible = false;
+            lblProgress.Visible = false;
+            btnExport.Visible = true;
+            //treeView.Visible = true;
+        }
+
+        private int totalItems = 0;
+        private int loadedItems = 0;
+
+        private async Task LoadTreeViewAsync()
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
 
-                    // --- ТАБЛИЦЫ И ТРИГГЕРЫ ---
+                    totalItems = await GetTotalItemsAsync(connection);
+                    loadedItems = 0;
+
                     TreeNode tablesRoot = new TreeNode("Таблицы");
-                    var tableNames = new List<string>();
+                    treeView.Nodes.Add(tablesRoot); // Сразу добавляем корневой узел
+                    treeView.Refresh();
 
+                    // --- Загружаем таблицы и триггеры ---
+                    var tableNames = new List<string>();
                     SqlCommand tableCommand = new SqlCommand(
                         "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
                         connection);
-                    SqlDataReader tableReader = tableCommand.ExecuteReader();
-                    while (tableReader.Read())
+                    SqlDataReader tableReader = await tableCommand.ExecuteReaderAsync();
+                    while (await tableReader.ReadAsync())
                     {
                         tableNames.Add(tableReader["TABLE_NAME"].ToString());
                     }
@@ -80,67 +105,116 @@ namespace DBMigration
                     foreach (string table in tableNames)
                     {
                         TreeNode tableNode = new TreeNode(table);
+                        tablesRoot.Nodes.Add(tableNode);
+                        IncrementProgress();
+                        treeView.Refresh();
+                        //await Task.Delay(0); // небольшая задержка для отрисовки
 
                         SqlCommand triggerCommand = new SqlCommand(@"
-                            SELECT name FROM sys.triggers
-                            WHERE parent_id = OBJECT_ID(@tableName);", connection);
+                    SELECT name FROM sys.triggers
+                    WHERE parent_id = OBJECT_ID(@tableName);", connection);
                         triggerCommand.Parameters.AddWithValue("@tableName", table);
 
-                        SqlDataReader triggerReader = triggerCommand.ExecuteReader();
-                        while (triggerReader.Read())
+                        SqlDataReader triggerReader = await triggerCommand.ExecuteReaderAsync();
+                        while (await triggerReader.ReadAsync())
                         {
                             string triggerName = triggerReader["name"].ToString();
                             TreeNode triggerNode = new TreeNode(triggerName);
                             tableNode.Nodes.Add(triggerNode);
+                            IncrementProgress();
+                            treeView.Refresh();
+                            //await Task.Delay(1);
                         }
                         triggerReader.Close();
-
-                        tablesRoot.Nodes.Add(tableNode);
                     }
 
-                    // --- СКАЛЯРНЫЕ ФУНКЦИИ ---
+                    // --- Скалярные функции ---
                     TreeNode scalarFuncsRoot = new TreeNode("Скалярные функции");
+                    treeView.Nodes.Add(scalarFuncsRoot);
+                    treeView.Refresh();
+                    //await Task.Delay(1);
 
                     SqlCommand scalarFuncCmd = new SqlCommand(@"
-                        SELECT SCHEMA_NAME(schema_id) AS schema_name, name
-                        FROM sys.objects
-                        WHERE type = 'FN';", connection);
-                    SqlDataReader scalarFuncReader = scalarFuncCmd.ExecuteReader();
-                    while (scalarFuncReader.Read())
+                SELECT SCHEMA_NAME(schema_id) AS schema_name, name
+                FROM sys.objects
+                WHERE type = 'FN';", connection);
+                    SqlDataReader scalarFuncReader = await scalarFuncCmd.ExecuteReaderAsync();
+                    while (await scalarFuncReader.ReadAsync())
                     {
                         string funcName = $"{scalarFuncReader["schema_name"]}.{scalarFuncReader["name"]}";
                         scalarFuncsRoot.Nodes.Add(new TreeNode(funcName));
+                        IncrementProgress();
+                        treeView.Refresh();
+                        //await Task.Delay(1);
                     }
                     scalarFuncReader.Close();
 
-                    // --- ТАБЛИЧНЫЕ ФУНКЦИИ ---
+                    // --- Табличные функции ---
                     TreeNode tableFuncsRoot = new TreeNode("Табличные функции");
+                    treeView.Nodes.Add(tableFuncsRoot);
+                    treeView.Refresh();
+                    //await Task.Delay(1);
 
                     SqlCommand tableFuncCmd = new SqlCommand(@"
-                        SELECT SCHEMA_NAME(schema_id) AS schema_name, name
-                        FROM sys.objects
-                        WHERE type IN ('TF', 'IF');", connection);
-                    SqlDataReader tableFuncReader = tableFuncCmd.ExecuteReader();
-                    while (tableFuncReader.Read())
+                SELECT SCHEMA_NAME(schema_id) AS schema_name, name
+                FROM sys.objects
+                WHERE type IN ('TF', 'IF');", connection);
+                    SqlDataReader tableFuncReader = await tableFuncCmd.ExecuteReaderAsync();
+                    while (await tableFuncReader.ReadAsync())
                     {
                         string funcName = $"{tableFuncReader["schema_name"]}.{tableFuncReader["name"]}";
                         tableFuncsRoot.Nodes.Add(new TreeNode(funcName));
+                        IncrementProgress();
+                        treeView.Refresh();
+                        //await Task.Delay(1);
                     }
                     tableFuncReader.Close();
-
-                    treeView.Nodes.Add(tablesRoot);
-                    treeView.Nodes.Add(scalarFuncsRoot);
-                    treeView.Nodes.Add(tableFuncsRoot);
-
-
-                    //treeView.ExpandAll();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка подключения: " + ex.Message);
+                MessageBox.Show("Ошибка загрузки: " + ex.Message);
             }
         }
+
+
+
+        private void IncrementProgress()
+        {
+            loadedItems++;
+            int percent = (int)((loadedItems / (float)totalItems) * 100);
+            progressBar.Value = Math.Min(percent, 100);
+            lblProgress.Text = $"Загрузка {percent}%... {loadedItems}/{totalItems} ";
+        }
+
+        private async Task<int> GetTotalItemsAsync(SqlConnection connection)
+        {
+            int count = 0;
+
+            // Таблицы
+            SqlCommand tableCountCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';", connection);
+            count += (int)await tableCountCmd.ExecuteScalarAsync();
+
+            // Триггеры
+            SqlCommand triggerCountCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM sys.triggers;", connection);
+            count += (int)await triggerCountCmd.ExecuteScalarAsync();
+
+            // Скалярные функции
+            SqlCommand scalarFuncCountCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM sys.objects WHERE type = 'FN';", connection);
+            count += (int)await scalarFuncCountCmd.ExecuteScalarAsync();
+
+            // Табличные функции
+            SqlCommand tableFuncCountCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM sys.objects WHERE type IN ('TF', 'IF');", connection);
+            count += (int)await tableFuncCountCmd.ExecuteScalarAsync();
+
+            return count;
+        }
+
+
 
         private void TreeView_AfterCheck(object sender, TreeViewEventArgs e)
         {
@@ -678,13 +752,31 @@ WHERE tab1.name = @tableName;
 
         private void btnAnaliz_Click(object sender, EventArgs e)
         {
+            Dictionary<string, string> selectedScripts = new();
 
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
 
+                foreach (TreeNode rootNode in treeView.Nodes)
+                {
+                    if (rootNode.Text == "Таблицы")
+                    {
+                        foreach (TreeNode tableNode in rootNode.Nodes)
+                        {
+                            if (tableNode.Checked)
+                            {
+                                string tableName = tableNode.Text;
+                                string originalScript = GetTableCreationScript(connection, tableName);
+                                selectedScripts[tableName] = originalScript;
+                            }
+                        }
+                    }
+                }
+            }
 
-            List<string> selectedItems = GetCheckedItems(treeView.Nodes);
-            AnalizForm formAn = new AnalizForm(selectedItems);
+            AnalizForm formAn = new AnalizForm(selectedScripts, connectionString);
             formAn.Show();
-
 
 
         }
