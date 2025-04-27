@@ -123,7 +123,7 @@ namespace DBMigration
         {
             try
             {
-                ExportEachObjectToFolder();
+                //ExportEachObjectToFolder();
             }
             catch (Exception ex)
             {
