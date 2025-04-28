@@ -175,99 +175,71 @@ namespace DBMigration
         }
         private void ConvertToPostgres()
         {
-       //         using (SqlConnection connection = new SqlConnection(connectionString))
-       //         {
-       //             connection.Open();
-       //
-       //             FolderBrowserDialog folderDialog = new FolderBrowserDialog
-       //             {
-       //                 Description = "Выберите папку для экспорта SQL-объектов для PostgreSQL"
-       //             };
-       //
-       //             if (folderDialog.ShowDialog() != DialogResult.OK)
-       //                 return;
-       //
-       //             string basePath = folderDialog.SelectedPath;
-       //             string date = DateTime.Now.ToString("dd-MM-yyyy");
-       //
-       //             int tablesCount = 0, funcsCount = 0, procsCount = 0;
-       //             Dictionary<string, List<(string name, string content)>> grouped = new();
-       //
-       //             grouped["Таблицы"] = new List<(string, string)>();
-       //             grouped["Функции"] = new List<(string, string)>();
-       //             grouped["Процедуры"] = new List<(string, string)>();
-       //
-       //             foreach (TreeNode rootNode in treeView.Nodes)
-       //             {
-       //                 if (rootNode.Text == "Таблицы")
-       //                 {
-       //                     foreach (TreeNode tableNode in rootNode.Nodes)
-       //                     {
-       //                         if (tableNode.Checked)
-       //                         {
-       //                             var script = $"-- Таблица: {tableNode.Text}\n" +
-       //                                          GetPostgresTableScript(connection, tableNode.Text);
-       //                             grouped["Таблицы"].Add((tableNode.Text, script));
-       //                             tablesCount++;
-       //
-       //                             foreach (TreeNode triggerNode in tableNode.Nodes)
-       //                             {
-       //                                 if (triggerNode.Checked)
-       //                                 {
-       //                                     var triggerScript = $"-- Триггер: {triggerNode.Text}\n" +
-       //                                                         GetPostgresTriggerScript(connection, triggerNode.Text);
-       //                                     grouped["Таблицы"].Add((triggerNode.Text, triggerScript));
-       //                                 }
-       //                             }
-       //                         }
-       //                     }
-       //                 }
-       //                 
-       //                 else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
-       //                 {
-       //                     foreach (TreeNode funcNode in rootNode.Nodes)
-       //                     {
-       //                         if (funcNode.Checked)
-       //                         {
-       //                             var funcScript = GetPostgresFunctionScript(connection, funcNode.Text);
-       //                             grouped["Функции"].Add((funcNode.Text, funcScript));
-       //                             funcsCount++;
-       //                         }
-       //                     }
-       //                 }
-       //                 else if (rootNode.Text == "Процедуры")
-       //                 {
-       //                     foreach (TreeNode procNode in rootNode.Nodes)
-       //                     {
-       //                         if (procNode.Checked)
-       //                         {
-       //                             var procScript = GetPostgresProcedureScript(connection, procNode.Text);
-       //                             grouped["Процедуры"].Add((procNode.Text, procScript));
-       //                             procsCount++;
-       //                         }
-       //                     }
-       //                 }
-       //                 
-       //             }
-       //
-       // string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
-       //         string exportFolderPath = Path.Combine(basePath, folderName);
-       //         Directory.CreateDirectory(exportFolderPath);
-       //
-       //         foreach (var group in grouped)
-       //         {
-       //             foreach (var (name, script) in group.Value)
-       //             {
-       //                 string safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars()));
-       //                 string filePath = Path.Combine(exportFolderPath, $"PG_{safeName}__{date}.sql");
-       //                 File.WriteAllText(filePath, script);
-       //             }
-       //         }
-       //
-       //         MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
-       //    
-       //         }   
-       //         
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                FolderBrowserDialog folderDialog = new FolderBrowserDialog
+                {
+                    Description = "Выберите папку для экспорта SQL-объектов для PostgreSQL"
+                };
+
+                if (folderDialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                string basePath = folderDialog.SelectedPath;
+                string date = DateTime.Now.ToString("dd-MM-yyyy");
+
+                int tablesCount = 0, funcsCount = 0, procsCount = 0;
+                Dictionary<string, List<(string name, string content)>> grouped = new();
+
+                grouped["Таблицы"] = new List<(string, string)>();
+                grouped["Функции"] = new List<(string, string)>();
+                grouped["Процедуры"] = new List<(string, string)>();
+
+                // Обработка таблиц
+                foreach (var item in listBoxTables.Items)
+                {
+                    string tableName = item.ToString();
+                    var script = $"-- Таблица: {tableName}\n" + GetPostgresTableScript(connection, tableName);
+                    grouped["Таблицы"].Add((tableName, script));
+                    tablesCount++;
+                }
+
+                // Обработка функций
+                foreach (var item in listBoxFunctions.Items)
+                {
+                    string funcName = item.ToString();
+                    var funcScript = $"-- Функция: {funcName}\n" + GetPostgresFunctionScript(connection, funcName);
+                    grouped["Функции"].Add((funcName, funcScript));
+                    funcsCount++;
+                }
+
+                // Обработка процедур
+                foreach (var item in listBoxProcedures.Items)
+                {
+                    string procName = item.ToString();
+                    var procScript = $"-- Процедура: {procName}\n" + GetPostgresProcedureScript(connection, procName);
+                    grouped["Процедуры"].Add((procName, procScript));
+                    procsCount++;
+                }
+
+                string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
+                string exportFolderPath = Path.Combine(basePath, folderName);
+                Directory.CreateDirectory(exportFolderPath);
+
+                foreach (var group in grouped)
+                {
+                    foreach (var (name, script) in group.Value)
+                    {
+                        string safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars()));
+                        string filePath = Path.Combine(exportFolderPath, $"PG_{safeName}__{date}.sql");
+                        File.WriteAllText(filePath, script);
+                    }
+                }
+
+                MessageBox.Show($"Экспорт в PostgreSQL завершён!\nСоздано: {exportFolderPath}", "Успешно");
+            }
         }
 
 

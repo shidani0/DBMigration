@@ -131,9 +131,9 @@ namespace DBMigration
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))));
             this.label1.Location = new System.Drawing.Point(11, 28);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(233, 36);
+            this.label1.Size = new System.Drawing.Size(159, 36);
             this.label1.TabIndex = 5;
-            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
+            this.label1.Text = "2. Выбор объектов\nисходной БД";
             // 
             // label2
             // 

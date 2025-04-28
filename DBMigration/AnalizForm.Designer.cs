@@ -15,7 +15,6 @@ namespace DBMigration
 
         private System.Windows.Forms.Panel panelMenu;
         private System.Windows.Forms.Panel panelContent;
-        private System.Windows.Forms.Button btnAction;
 
         protected override void Dispose(bool disposing)
         {
@@ -39,7 +38,6 @@ namespace DBMigration
             this.btnFuncShow = new System.Windows.Forms.Button();
             this.btnTableShow = new System.Windows.Forms.Button();
             this.convertToPostgresButton = new System.Windows.Forms.Button();
-            this.btnAction = new System.Windows.Forms.Button();
             this.exportButton = new System.Windows.Forms.Button();
             this.listBoxTables = new System.Windows.Forms.ListBox();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
@@ -100,7 +98,6 @@ namespace DBMigration
             this.panelContent.Controls.Add(this.btnFuncShow);
             this.panelContent.Controls.Add(this.btnTableShow);
             this.panelContent.Controls.Add(this.convertToPostgresButton);
-            this.panelContent.Controls.Add(this.btnAction);
             this.panelContent.Controls.Add(this.exportButton);
             this.panelContent.Controls.Add(this.listBoxTables);
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -163,7 +160,7 @@ namespace DBMigration
             // convertToPostgresButton
             // 
             this.convertToPostgresButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 502);
+            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 506);
             this.convertToPostgresButton.Name = "convertToPostgresButton";
             this.convertToPostgresButton.Size = new System.Drawing.Size(231, 33);
             this.convertToPostgresButton.TabIndex = 4;
@@ -171,20 +168,10 @@ namespace DBMigration
             this.convertToPostgresButton.UseVisualStyleBackColor = true;
             this.convertToPostgresButton.Click += new System.EventHandler(this.convertToPostgresButton_Click);
             // 
-            // btnAction
-            // 
-            this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAction.Location = new System.Drawing.Point(404, 501);
-            this.btnAction.Name = "btnAction";
-            this.btnAction.Size = new System.Drawing.Size(80, 30);
-            this.btnAction.TabIndex = 0;
-            this.btnAction.Text = "OK";
-            this.btnAction.UseVisualStyleBackColor = true;
-            // 
             // exportButton
             // 
             this.exportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.exportButton.Location = new System.Drawing.Point(10, 458);
+            this.exportButton.Location = new System.Drawing.Point(10, 462);
             this.exportButton.Name = "exportButton";
             this.exportButton.Size = new System.Drawing.Size(252, 38);
             this.exportButton.TabIndex = 3;
