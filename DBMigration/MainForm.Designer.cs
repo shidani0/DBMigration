@@ -78,7 +78,7 @@ namespace DBMigration
             this.btnExport.TabIndex = 3;
             this.btnExport.Text = "Экспорт";
             this.btnExport.UseVisualStyleBackColor = true;
-            this.btnExport.Click += new System.EventHandler(this.btnAnaliz_Click);
+            this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
             // treeView
             // 

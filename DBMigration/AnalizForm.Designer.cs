@@ -33,11 +33,16 @@ namespace DBMigration
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.btnAction = new System.Windows.Forms.Button();
-            this.panelResizeMenu = new System.Windows.Forms.Panel();
+            this.listBoxProcedures = new System.Windows.Forms.ListBox();
+            this.listBoxFunctions = new System.Windows.Forms.ListBox();
+            this.btnProcShow = new System.Windows.Forms.Button();
+            this.btnFuncShow = new System.Windows.Forms.Button();
+            this.btnTableShow = new System.Windows.Forms.Button();
             this.convertToPostgresButton = new System.Windows.Forms.Button();
+            this.btnAction = new System.Windows.Forms.Button();
             this.exportButton = new System.Windows.Forms.Button();
+            this.listBoxTables = new System.Windows.Forms.ListBox();
+            this.panelResizeMenu = new System.Windows.Forms.Panel();
             this.panelMenu.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.SuspendLayout();
@@ -89,9 +94,15 @@ namespace DBMigration
             // 
             this.panelContent.BackColor = System.Drawing.Color.White;
             this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelContent.Controls.Add(this.listBoxProcedures);
+            this.panelContent.Controls.Add(this.listBoxFunctions);
+            this.panelContent.Controls.Add(this.btnProcShow);
+            this.panelContent.Controls.Add(this.btnFuncShow);
+            this.panelContent.Controls.Add(this.btnTableShow);
             this.panelContent.Controls.Add(this.convertToPostgresButton);
+            this.panelContent.Controls.Add(this.btnAction);
             this.panelContent.Controls.Add(this.exportButton);
-            this.panelContent.Controls.Add(this.listBox1);
+            this.panelContent.Controls.Add(this.listBoxTables);
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.panelContent.Location = new System.Drawing.Point(256, 0);
@@ -99,25 +110,97 @@ namespace DBMigration
             this.panelContent.Size = new System.Drawing.Size(497, 544);
             this.panelContent.TabIndex = 1;
             // 
-            // listBox1
+            // listBoxProcedures
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 20;
-            this.listBox1.Location = new System.Drawing.Point(10, 11);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(474, 184);
-            this.listBox1.TabIndex = 0;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
+            this.listBoxProcedures.FormattingEnabled = true;
+            this.listBoxProcedures.ItemHeight = 20;
+            this.listBoxProcedures.Location = new System.Drawing.Point(149, 45);
+            this.listBoxProcedures.Name = "listBoxProcedures";
+            this.listBoxProcedures.Size = new System.Drawing.Size(343, 344);
+            this.listBoxProcedures.TabIndex = 9;
+            this.listBoxProcedures.SelectedIndexChanged += new System.EventHandler(this.listBoxProcedures_SelectedIndexChanged);
+            // 
+            // listBoxFunctions
+            // 
+            this.listBoxFunctions.FormattingEnabled = true;
+            this.listBoxFunctions.ItemHeight = 20;
+            this.listBoxFunctions.Location = new System.Drawing.Point(149, 45);
+            this.listBoxFunctions.Name = "listBoxFunctions";
+            this.listBoxFunctions.Size = new System.Drawing.Size(343, 344);
+            this.listBoxFunctions.TabIndex = 8;
+            this.listBoxFunctions.SelectedIndexChanged += new System.EventHandler(this.listBoxFunctions_SelectedIndexChanged);
+            // 
+            // btnProcShow
+            // 
+            this.btnProcShow.Location = new System.Drawing.Point(31, 272);
+            this.btnProcShow.Name = "btnProcShow";
+            this.btnProcShow.Size = new System.Drawing.Size(112, 117);
+            this.btnProcShow.TabIndex = 7;
+            this.btnProcShow.Text = "Показать список выбранных процедур";
+            this.btnProcShow.UseVisualStyleBackColor = true;
+            this.btnProcShow.Click += new System.EventHandler(this.btnProcShow_Click);
+            // 
+            // btnFuncShow
+            // 
+            this.btnFuncShow.Location = new System.Drawing.Point(31, 149);
+            this.btnFuncShow.Name = "btnFuncShow";
+            this.btnFuncShow.Size = new System.Drawing.Size(112, 117);
+            this.btnFuncShow.TabIndex = 6;
+            this.btnFuncShow.Text = "Показать список выбранных функций";
+            this.btnFuncShow.UseVisualStyleBackColor = true;
+            this.btnFuncShow.Click += new System.EventHandler(this.btnFuncShow_Click);
+            // 
+            // btnTableShow
+            // 
+            this.btnTableShow.Location = new System.Drawing.Point(31, 45);
+            this.btnTableShow.Name = "btnTableShow";
+            this.btnTableShow.Size = new System.Drawing.Size(112, 98);
+            this.btnTableShow.TabIndex = 5;
+            this.btnTableShow.Text = "Показать список выбранных таблиц";
+            this.btnTableShow.UseVisualStyleBackColor = true;
+            this.btnTableShow.Click += new System.EventHandler(this.btnTableShow_Click);
+            // 
+            // convertToPostgresButton
+            // 
+            this.convertToPostgresButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 502);
+            this.convertToPostgresButton.Name = "convertToPostgresButton";
+            this.convertToPostgresButton.Size = new System.Drawing.Size(231, 33);
+            this.convertToPostgresButton.TabIndex = 4;
+            this.convertToPostgresButton.Text = "Конвертировать в PG";
+            this.convertToPostgresButton.UseVisualStyleBackColor = true;
+            this.convertToPostgresButton.Click += new System.EventHandler(this.convertToPostgresButton_Click);
             // 
             // btnAction
             // 
             this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAction.Location = new System.Drawing.Point(653, 494);
+            this.btnAction.Location = new System.Drawing.Point(404, 501);
             this.btnAction.Name = "btnAction";
             this.btnAction.Size = new System.Drawing.Size(80, 30);
             this.btnAction.TabIndex = 0;
             this.btnAction.Text = "OK";
             this.btnAction.UseVisualStyleBackColor = true;
+            // 
+            // exportButton
+            // 
+            this.exportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.exportButton.Location = new System.Drawing.Point(10, 458);
+            this.exportButton.Name = "exportButton";
+            this.exportButton.Size = new System.Drawing.Size(252, 38);
+            this.exportButton.TabIndex = 3;
+            this.exportButton.Text = "Экспортировать SQL скрипты";
+            this.exportButton.UseVisualStyleBackColor = true;
+            this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
+            // 
+            // listBoxTables
+            // 
+            this.listBoxTables.FormattingEnabled = true;
+            this.listBoxTables.ItemHeight = 20;
+            this.listBoxTables.Location = new System.Drawing.Point(149, 45);
+            this.listBoxTables.Name = "listBoxTables";
+            this.listBoxTables.Size = new System.Drawing.Size(343, 344);
+            this.listBoxTables.TabIndex = 0;
+            this.listBoxTables.SelectedIndexChanged += new System.EventHandler(this.listBoxTables_SelectedIndexChanged);
             // 
             // panelResizeMenu
             // 
@@ -132,33 +215,10 @@ namespace DBMigration
             this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
             this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
             // 
-            // convertToPostgresButton
-            // 
-            this.convertToPostgresButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 502);
-            this.convertToPostgresButton.Name = "convertToPostgresButton";
-            this.convertToPostgresButton.Size = new System.Drawing.Size(231, 33);
-            this.convertToPostgresButton.TabIndex = 4;
-            this.convertToPostgresButton.Text = "Конвертировать в PG";
-            this.convertToPostgresButton.UseVisualStyleBackColor = true;
-            this.convertToPostgresButton.Click += new System.EventHandler(this.convertToPostgresButton_Click);
-            // 
-            // exportButton
-            // 
-            this.exportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.exportButton.Location = new System.Drawing.Point(10, 458);
-            this.exportButton.Name = "exportButton";
-            this.exportButton.Size = new System.Drawing.Size(252, 38);
-            this.exportButton.TabIndex = 3;
-            this.exportButton.Text = "Экспортировать SQL скрипты";
-            this.exportButton.UseVisualStyleBackColor = true;
-            this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
-            // 
             // AnalizForm
             // 
             this.ClientSize = new System.Drawing.Size(753, 544);
             this.Controls.Add(this.panelResizeMenu);
-            this.Controls.Add(this.btnAction);
             this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panelMenu);
             this.Name = "AnalizForm";
@@ -172,10 +232,15 @@ namespace DBMigration
 
         #endregion
 
-        private ListBox listBox1;
+        private ListBox listBoxTables;
         private Label label2;
         private Label label1;
         private Button convertToPostgresButton;
         private Button exportButton;
+        private Button btnProcShow;
+        private Button btnFuncShow;
+        private Button btnTableShow;
+        private ListBox listBoxFunctions;
+        private ListBox listBoxProcedures;
     }
 }

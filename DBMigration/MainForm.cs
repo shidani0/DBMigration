@@ -169,6 +169,24 @@ namespace DBMigration
                         //await Task.Delay(1);
                     }
                     tableFuncReader.Close();
+                    // --- Хранимые процедуры ---
+                    TreeNode proceduresRoot = new TreeNode("Хранимые процедуры");
+                    treeView.Nodes.Add(proceduresRoot);
+                    treeView.Refresh();
+
+                    SqlCommand procedureCmd = new SqlCommand(@"
+                SELECT SCHEMA_NAME(schema_id) AS schema_name, name
+                FROM sys.objects
+                WHERE type = 'P';", connection);
+                    SqlDataReader procedureReader = await procedureCmd.ExecuteReaderAsync();
+                    while (await procedureReader.ReadAsync())
+                    {
+                        string procName = $"{procedureReader["schema_name"]}.{procedureReader["name"]}";
+                        proceduresRoot.Nodes.Add(new TreeNode(procName));
+                        IncrementProgress();
+                        treeView.Refresh();
+                    }
+                    procedureReader.Close();
                 }
             }
             catch (Exception ex)
@@ -210,6 +228,10 @@ namespace DBMigration
             SqlCommand tableFuncCountCmd = new SqlCommand(
                 "SELECT COUNT(*) FROM sys.objects WHERE type IN ('TF', 'IF');", connection);
             count += (int)await tableFuncCountCmd.ExecuteScalarAsync();
+
+            SqlCommand procedureCountCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM sys.objects WHERE type = 'P';", connection);
+            count += (int)await procedureCountCmd.ExecuteScalarAsync();
 
             return count;
         }
@@ -421,6 +443,8 @@ WHERE tab1.name = @tableName;
             }
         }
 
+
+        
         private string GetProcedureScript(SqlConnection connection, string procedureName)
         {
             try
@@ -449,6 +473,7 @@ WHERE tab1.name = @tableName;
         }
 
 
+        /*
         private void ExportEachObjectToFolder()
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -543,20 +568,11 @@ WHERE tab1.name = @tableName;
                 MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
             }
         }
+         */
 
-        private void exportButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                ExportEachObjectToFolder();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при экспорте: " + ex.Message);
-            }
-        }
+    
 
-
+        /*
         private void ConvertToPostgres()
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -606,7 +622,7 @@ WHERE tab1.name = @tableName;
                             }
                         }
                     }
-                    /*
+                    
                     else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
                     {
                         foreach (TreeNode funcNode in rootNode.Nodes)
@@ -631,7 +647,7 @@ WHERE tab1.name = @tableName;
                             }
                         }
                     }
-                    */
+                    
                 }
 
                 string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
@@ -651,6 +667,7 @@ WHERE tab1.name = @tableName;
                 MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
             }
         }
+         */
 
 
         private string GetPostgresTableScript(SqlConnection connection, string tableName)
@@ -736,23 +753,16 @@ WHERE tab1.name = @tableName;
             }
         }
 
-
-
-        private void convertToPostgresButton_Click(object sender, EventArgs e)
+        public class DbObject
         {
-            try
-            {
-                ConvertToPostgres();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при конвертации: " + ex.Message);
-            }
+            public string Name { get; set; }
+            public string Script { get; set; }
+            public string Type { get; set; }
         }
 
-        private void btnAnaliz_Click(object sender, EventArgs e)
+        private void btnExport_Click(object sender, EventArgs e)
         {
-            Dictionary<string, string> selectedScripts = new();
+            List<DbObject> selectedScripts = new();
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -768,7 +778,46 @@ WHERE tab1.name = @tableName;
                             {
                                 string tableName = tableNode.Text;
                                 string originalScript = GetTableCreationScript(connection, tableName);
-                                selectedScripts[tableName] = originalScript;
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = tableName,
+                                    Script = originalScript,
+                                    Type = "Таблица"
+                                });
+                            }
+                        }
+                    }
+                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
+                    {
+                        foreach (TreeNode funcNode in rootNode.Nodes)
+                        {
+                            if (funcNode.Checked)
+                            {
+                                string funcName = funcNode.Text;
+                                string originalScript = GetFunctionScript(connection, funcName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = funcName,
+                                    Script = originalScript,
+                                    Type = "Функция"
+                                });
+                            }
+                        }
+                    }
+                    else if (rootNode.Text == "Хранимые процедуры")
+                    {
+                        foreach (TreeNode procNode in rootNode.Nodes)
+                        {
+                            if (procNode.Checked)
+                            {
+                                string procName = procNode.Text;
+                                string originalScript = GetProcedureScript(connection, procName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = procName,
+                                    Script = originalScript,
+                                    Type = "Процедура"
+                                });
                             }
                         }
                     }
@@ -777,10 +826,9 @@ WHERE tab1.name = @tableName;
 
             AnalizForm formAn = new AnalizForm(selectedScripts, connectionString);
             formAn.Show();
-
-
         }
 
+        /*
         private List<string> GetCheckedItems(TreeNodeCollection nodes)
         {
             List<string> checkedItems = new List<string>();
@@ -796,6 +844,7 @@ WHERE tab1.name = @tableName;
 
             return checkedItems;
         }
+         */
 
 
     }
