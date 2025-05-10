@@ -262,6 +262,147 @@ namespace DBMigration
         }
 
 
+        
+
+
+
+        private string GetTriggerCreationScript(SqlConnection connection, string triggerName)
+        {
+            try
+            {
+                string script = "";
+                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID('{triggerName}'))", connection);
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    script += reader.GetString(0); // Добавление части скрипта
+                }
+                reader.Close();
+
+                if (string.IsNullOrEmpty(script))
+                {
+                    script = $"-- Не удалось получить текст триггера: {triggerName}\n";
+                }
+
+                return script;
+            }
+            catch (Exception ex)
+            {
+                return $"Ошибка получения скрипта для триггера {triggerName}: {ex.Message}";
+            }
+        }
+
+        public class DbObject
+        {
+            public string Name { get; set; }
+            public string Script { get; set; }
+            public string Type { get; set; }
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            List<DbObject> selectedScripts = new();
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                foreach (TreeNode rootNode in treeView.Nodes)
+                {
+                    /*
+                     
+                    if (rootNode.Text == "Таблицы")
+                    {
+                        foreach (TreeNode tableNode in rootNode.Nodes)
+                        {
+                            if (tableNode.Checked)
+                            {
+                                string tableName = tableNode.Text;
+                                string originalScript = GetTableCreationScript(connection, tableName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = tableName,
+                                    Script = originalScript,
+                                    Type = "Таблица"
+                                });
+                            }
+                        }
+                    }
+                   */
+                    if (rootNode.Text == "Таблицы")
+                    {
+                        foreach (TreeNode tableNode in rootNode.Nodes)
+                        {
+                            if (tableNode.Checked)
+                            {
+                                string tableName = tableNode.Text;
+                                string originalScript = GetTableCreationScript(connection, tableName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = tableName,
+                                    Script = originalScript,
+                                    Type = "Таблица"
+                                });
+                            }
+
+                            // Обработка дочерних узлов таблицы — например, триггеров
+                            foreach (TreeNode childNode in tableNode.Nodes)
+                            {
+                                if (childNode.Checked)
+                                {
+                                    string triggerName = childNode.Text;
+                                    string triggerScript = GetTriggerCreationScript(connection, triggerName);
+                                    selectedScripts.Add(new DbObject
+                                    {
+                                        Name = triggerName,
+                                        Script = triggerScript,
+                                        Type = "Триггер"
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
+                    {
+                        foreach (TreeNode funcNode in rootNode.Nodes)
+                        {
+                            if (funcNode.Checked)
+                            {
+                                string funcName = funcNode.Text;
+                                string originalScript = GetFunctionScript(connection, funcName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = funcName,
+                                    Script = originalScript,
+                                    Type = "Функция"
+                                });
+                            }
+                        }
+                    }
+                    else if (rootNode.Text == "Хранимые процедуры")
+                    {
+                        foreach (TreeNode procNode in rootNode.Nodes)
+                        {
+                            if (procNode.Checked)
+                            {
+                                string procName = procNode.Text;
+                                string originalScript = GetProcedureScript(connection, procName);
+                                selectedScripts.Add(new DbObject
+                                {
+                                    Name = procName,
+                                    Script = originalScript,
+                                    Type = "Процедура"
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            AnalizForm formAn = new AnalizForm(selectedScripts, connectionString);
+            formAn.Show();
+        }
+
         private string GetTableCreationScript(SqlConnection connection, string tableName)
         {
             try
@@ -388,34 +529,6 @@ WHERE tab1.name = @tableName;
             }
         }
 
-
-
-        private string GetTriggerCreationScript(SqlConnection connection, string triggerName)
-        {
-            try
-            {
-                string script = "";
-                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID('{triggerName}'))", connection);
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    script += reader.GetString(0); // Добавление части скрипта
-                }
-                reader.Close();
-
-                if (string.IsNullOrEmpty(script))
-                {
-                    script = $"-- Не удалось получить текст триггера: {triggerName}\n";
-                }
-
-                return script;
-            }
-            catch (Exception ex)
-            {
-                return $"Ошибка получения скрипта для триггера {triggerName}: {ex.Message}";
-            }
-        }
-
         private string GetFunctionScript(SqlConnection connection, string functionName)
         {
             try
@@ -443,8 +556,6 @@ WHERE tab1.name = @tableName;
             }
         }
 
-
-        
         private string GetProcedureScript(SqlConnection connection, string procedureName)
         {
             try
@@ -472,361 +583,6 @@ WHERE tab1.name = @tableName;
             }
         }
 
-
-        /*
-        private void ExportEachObjectToFolder()
-        {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                FolderBrowserDialog folderDialog = new FolderBrowserDialog
-                {
-                    Description = "Выберите папку для экспорта SQL-объектов"
-                };
-
-                if (folderDialog.ShowDialog() != DialogResult.OK)
-                    return;
-
-                string basePath = folderDialog.SelectedPath;
-                string date = DateTime.Now.ToString("dd-MM-yyyy");
-
-                int tablesCount = 0, funcsCount = 0, procsCount = 0;
-
-                Dictionary<string, List<(string name, string content)>> grouped = new();
-
-                grouped["Таблицы"] = new List<(string, string)>();
-                grouped["Функции"] = new List<(string, string)>();
-                grouped["Процедуры"] = new List<(string, string)>();
-
-                foreach (TreeNode rootNode in treeView.Nodes)
-                {
-                    if (rootNode.Text == "Таблицы")
-                    {
-                        foreach (TreeNode tableNode in rootNode.Nodes)
-                        {
-                            if (tableNode.Checked)
-                            {
-                                var script = $"-- Таблица: {tableNode.Text}\n" +
-                                             GetTableCreationScript(connection, tableNode.Text);
-                                grouped["Таблицы"].Add((tableNode.Text, script));
-                                tablesCount++;
-
-                                foreach (TreeNode triggerNode in tableNode.Nodes)
-                                {
-                                    if (triggerNode.Checked)
-                                    {
-                                        var triggerScript = $"-- Триггер: {triggerNode.Text}\n" +
-                                                            GetTriggerCreationScript(connection, triggerNode.Text);
-                                        grouped["Таблицы"].Add((triggerNode.Text, triggerScript));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
-                    {
-                        foreach (TreeNode funcNode in rootNode.Nodes)
-                        {
-                            if (funcNode.Checked)
-                            {
-                                var funcScript = GetFunctionScript(connection, funcNode.Text);
-                                grouped["Функции"].Add((funcNode.Text, funcScript));
-                                funcsCount++;
-                            }
-                        }
-                    }
-                    else if (rootNode.Text == "Процедуры")
-                    {
-                        foreach (TreeNode procNode in rootNode.Nodes)
-                        {
-                            if (procNode.Checked)
-                            {
-                                var procScript = GetProcedureScript(connection, procNode.Text);
-                                grouped["Процедуры"].Add((procNode.Text, procScript));
-                                procsCount++;
-                            }
-                        }
-                    }
-                }
-
-                // Название родительской папки
-                string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
-                string exportFolderPath = Path.Combine(basePath, folderName);
-                Directory.CreateDirectory(exportFolderPath);
-
-                foreach (var group in grouped)
-                {
-                    foreach (var (name, script) in group.Value)
-                    {
-                        string safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars()));
-                        string filePath = Path.Combine(exportFolderPath, $"{safeName}__{date}.sql");
-                        File.WriteAllText(filePath, script);
-                    }
-                }
-
-                MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
-            }
-        }
-         */
-
-    
-
-        /*
-        private void ConvertToPostgres()
-        {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                FolderBrowserDialog folderDialog = new FolderBrowserDialog
-                {
-                    Description = "Выберите папку для экспорта SQL-объектов для PostgreSQL"
-                };
-
-                if (folderDialog.ShowDialog() != DialogResult.OK)
-                    return;
-
-                string basePath = folderDialog.SelectedPath;
-                string date = DateTime.Now.ToString("dd-MM-yyyy");
-
-                int tablesCount = 0, funcsCount = 0, procsCount = 0;
-                Dictionary<string, List<(string name, string content)>> grouped = new();
-
-                grouped["Таблицы"] = new List<(string, string)>();
-                grouped["Функции"] = new List<(string, string)>();
-                grouped["Процедуры"] = new List<(string, string)>();
-
-                foreach (TreeNode rootNode in treeView.Nodes)
-                {
-                    if (rootNode.Text == "Таблицы")
-                    {
-                        foreach (TreeNode tableNode in rootNode.Nodes)
-                        {
-                            if (tableNode.Checked)
-                            {
-                                var script = $"-- Таблица: {tableNode.Text}\n" +
-                                             GetPostgresTableScript(connection, tableNode.Text);
-                                grouped["Таблицы"].Add((tableNode.Text, script));
-                                tablesCount++;
-
-                                foreach (TreeNode triggerNode in tableNode.Nodes)
-                                {
-                                    if (triggerNode.Checked)
-                                    {
-                                        var triggerScript = $"-- Триггер: {triggerNode.Text}\n" +
-                                                            GetPostgresTriggerScript(connection, triggerNode.Text);
-                                        grouped["Таблицы"].Add((triggerNode.Text, triggerScript));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
-                    {
-                        foreach (TreeNode funcNode in rootNode.Nodes)
-                        {
-                            if (funcNode.Checked)
-                            {
-                                var funcScript = GetPostgresFunctionScript(connection, funcNode.Text);
-                                grouped["Функции"].Add((funcNode.Text, funcScript));
-                                funcsCount++;
-                            }
-                        }
-                    }
-                    else if (rootNode.Text == "Процедуры")
-                    {
-                        foreach (TreeNode procNode in rootNode.Nodes)
-                        {
-                            if (procNode.Checked)
-                            {
-                                var procScript = GetPostgresProcedureScript(connection, procNode.Text);
-                                grouped["Процедуры"].Add((procNode.Text, procScript));
-                                procsCount++;
-                            }
-                        }
-                    }
-                    
-                }
-
-                string folderName = $"Таблицы_{tablesCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
-                string exportFolderPath = Path.Combine(basePath, folderName);
-                Directory.CreateDirectory(exportFolderPath);
-
-                foreach (var group in grouped)
-                {
-                    foreach (var (name, script) in group.Value)
-                    {
-                        string safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars()));
-                        string filePath = Path.Combine(exportFolderPath, $"PG_{safeName}__{date}.sql");
-                        File.WriteAllText(filePath, script);
-                    }
-                }
-
-                MessageBox.Show($"Экспорт завершён!\nСоздано: {exportFolderPath}", "Успешно");
-            }
-        }
-         */
-
-
-        private string GetPostgresTableScript(SqlConnection connection, string tableName)
-        {
-            try
-            {
-                string script = "-- PostgreSQL скрипт создания таблицы\n";
-
-                // Получаем данные о колонках таблицы
-                string tableScriptQuery = @"
-        SELECT 
-            COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
-            IS_NULLABLE, NUMERIC_PRECISION, NUMERIC_SCALE 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_NAME = @tableName";
-
-                using (SqlCommand cmd = new SqlCommand(tableScriptQuery, connection))
-                {
-                    cmd.Parameters.AddWithValue("@tableName", tableName);
-                    SqlDataReader reader = cmd.ExecuteReader();
-
-                    var columns = new List<string>();
-                    while (reader.Read())
-                    {
-                        string columnDef = $"{reader["COLUMN_NAME"]} {ConvertToPostgresType(reader)}";
-                        if (reader["IS_NULLABLE"].ToString() == "NO")
-                        {
-                            columnDef += " NOT NULL";
-                        }
-                        columns.Add(columnDef);
-                    }
-                    reader.Close();
-
-                    script += $"CREATE TABLE {tableName} (\n" + string.Join(",\n", columns) + "\n);";
-                }
-
-                return script;
-            }
-            catch (Exception ex)
-            {
-                return $"-- Ошибка генерации скрипта для таблицы {tableName}: {ex.Message}\n";
-            }
-        }
-
-        private string ConvertToPostgresType(SqlDataReader reader)
-        {
-            string dataType = reader["DATA_TYPE"].ToString();
-
-            switch (dataType)
-            {
-                case "varchar":
-                case "nvarchar":
-                    return $"{dataType}({reader["CHARACTER_MAXIMUM_LENGTH"]})";
-                case "decimal":
-                case "numeric":
-                    return $"{dataType}({reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]})";
-                default:
-                    return dataType;
-            }
-        }
-
-        private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
-        {
-            try
-            {
-                string script = "-- PostgreSQL скрипт триггера\n";
-                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID('{triggerName}'))", connection);
-                SqlDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    // Конвертация текста триггера в PostgreSQL формат
-                    script += reader.GetString(0).Replace("INSERTED", "NEW")
-                                                .Replace("DELETED", "OLD");
-                }
-                reader.Close();
-
-                return script;
-            }
-            catch (Exception ex)
-            {
-                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}\n";
-            }
-        }
-
-        public class DbObject
-        {
-            public string Name { get; set; }
-            public string Script { get; set; }
-            public string Type { get; set; }
-        }
-
-        private void btnExport_Click(object sender, EventArgs e)
-        {
-            List<DbObject> selectedScripts = new();
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                foreach (TreeNode rootNode in treeView.Nodes)
-                {
-                    if (rootNode.Text == "Таблицы")
-                    {
-                        foreach (TreeNode tableNode in rootNode.Nodes)
-                        {
-                            if (tableNode.Checked)
-                            {
-                                string tableName = tableNode.Text;
-                                string originalScript = GetTableCreationScript(connection, tableName);
-                                selectedScripts.Add(new DbObject
-                                {
-                                    Name = tableName,
-                                    Script = originalScript,
-                                    Type = "Таблица"
-                                });
-                            }
-                        }
-                    }
-                    else if (rootNode.Text == "Скалярные функции" || rootNode.Text == "Табличные функции")
-                    {
-                        foreach (TreeNode funcNode in rootNode.Nodes)
-                        {
-                            if (funcNode.Checked)
-                            {
-                                string funcName = funcNode.Text;
-                                string originalScript = GetFunctionScript(connection, funcName);
-                                selectedScripts.Add(new DbObject
-                                {
-                                    Name = funcName,
-                                    Script = originalScript,
-                                    Type = "Функция"
-                                });
-                            }
-                        }
-                    }
-                    else if (rootNode.Text == "Хранимые процедуры")
-                    {
-                        foreach (TreeNode procNode in rootNode.Nodes)
-                        {
-                            if (procNode.Checked)
-                            {
-                                string procName = procNode.Text;
-                                string originalScript = GetProcedureScript(connection, procName);
-                                selectedScripts.Add(new DbObject
-                                {
-                                    Name = procName,
-                                    Script = originalScript,
-                                    Type = "Процедура"
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            AnalizForm formAn = new AnalizForm(selectedScripts, connectionString);
-            formAn.Show();
-        }
 
         /*
         private List<string> GetCheckedItems(TreeNodeCollection nodes)

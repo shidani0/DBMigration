@@ -32,6 +32,8 @@ namespace DBMigration
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.btnTrigShow = new System.Windows.Forms.Button();
+            this.listBoxTrigger = new System.Windows.Forms.ListBox();
             this.listBoxProcedures = new System.Windows.Forms.ListBox();
             this.listBoxFunctions = new System.Windows.Forms.ListBox();
             this.btnProcShow = new System.Windows.Forms.Button();
@@ -92,6 +94,8 @@ namespace DBMigration
             // 
             this.panelContent.BackColor = System.Drawing.Color.White;
             this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelContent.Controls.Add(this.btnTrigShow);
+            this.panelContent.Controls.Add(this.listBoxTrigger);
             this.panelContent.Controls.Add(this.listBoxProcedures);
             this.panelContent.Controls.Add(this.listBoxFunctions);
             this.panelContent.Controls.Add(this.btnProcShow);
@@ -107,13 +111,33 @@ namespace DBMigration
             this.panelContent.Size = new System.Drawing.Size(497, 544);
             this.panelContent.TabIndex = 1;
             // 
+            // btnTrigShow
+            // 
+            this.btnTrigShow.Location = new System.Drawing.Point(31, 224);
+            this.btnTrigShow.Name = "btnTrigShow";
+            this.btnTrigShow.Size = new System.Drawing.Size(170, 52);
+            this.btnTrigShow.TabIndex = 11;
+            this.btnTrigShow.Text = "Показать список выбранных процедур";
+            this.btnTrigShow.UseVisualStyleBackColor = true;
+            this.btnTrigShow.Click += new System.EventHandler(this.btnTrigShow_Click);
+            // 
+            // listBoxTrigger
+            // 
+            this.listBoxTrigger.FormattingEnabled = true;
+            this.listBoxTrigger.ItemHeight = 20;
+            this.listBoxTrigger.Location = new System.Drawing.Point(207, 45);
+            this.listBoxTrigger.Name = "listBoxTrigger";
+            this.listBoxTrigger.Size = new System.Drawing.Size(285, 344);
+            this.listBoxTrigger.TabIndex = 10;
+            this.listBoxTrigger.SelectedIndexChanged += new System.EventHandler(this.listBoxTrigger_SelectedIndexChanged);
+            // 
             // listBoxProcedures
             // 
             this.listBoxProcedures.FormattingEnabled = true;
             this.listBoxProcedures.ItemHeight = 20;
-            this.listBoxProcedures.Location = new System.Drawing.Point(149, 45);
+            this.listBoxProcedures.Location = new System.Drawing.Point(207, 45);
             this.listBoxProcedures.Name = "listBoxProcedures";
-            this.listBoxProcedures.Size = new System.Drawing.Size(343, 344);
+            this.listBoxProcedures.Size = new System.Drawing.Size(285, 344);
             this.listBoxProcedures.TabIndex = 9;
             this.listBoxProcedures.SelectedIndexChanged += new System.EventHandler(this.listBoxProcedures_SelectedIndexChanged);
             // 
@@ -121,17 +145,17 @@ namespace DBMigration
             // 
             this.listBoxFunctions.FormattingEnabled = true;
             this.listBoxFunctions.ItemHeight = 20;
-            this.listBoxFunctions.Location = new System.Drawing.Point(149, 45);
+            this.listBoxFunctions.Location = new System.Drawing.Point(207, 45);
             this.listBoxFunctions.Name = "listBoxFunctions";
-            this.listBoxFunctions.Size = new System.Drawing.Size(343, 344);
+            this.listBoxFunctions.Size = new System.Drawing.Size(285, 344);
             this.listBoxFunctions.TabIndex = 8;
             this.listBoxFunctions.SelectedIndexChanged += new System.EventHandler(this.listBoxFunctions_SelectedIndexChanged);
             // 
             // btnProcShow
             // 
-            this.btnProcShow.Location = new System.Drawing.Point(31, 272);
+            this.btnProcShow.Location = new System.Drawing.Point(31, 166);
             this.btnProcShow.Name = "btnProcShow";
-            this.btnProcShow.Size = new System.Drawing.Size(112, 117);
+            this.btnProcShow.Size = new System.Drawing.Size(170, 52);
             this.btnProcShow.TabIndex = 7;
             this.btnProcShow.Text = "Показать список выбранных процедур";
             this.btnProcShow.UseVisualStyleBackColor = true;
@@ -139,9 +163,9 @@ namespace DBMigration
             // 
             // btnFuncShow
             // 
-            this.btnFuncShow.Location = new System.Drawing.Point(31, 149);
+            this.btnFuncShow.Location = new System.Drawing.Point(31, 106);
             this.btnFuncShow.Name = "btnFuncShow";
-            this.btnFuncShow.Size = new System.Drawing.Size(112, 117);
+            this.btnFuncShow.Size = new System.Drawing.Size(170, 54);
             this.btnFuncShow.TabIndex = 6;
             this.btnFuncShow.Text = "Показать список выбранных функций";
             this.btnFuncShow.UseVisualStyleBackColor = true;
@@ -151,7 +175,7 @@ namespace DBMigration
             // 
             this.btnTableShow.Location = new System.Drawing.Point(31, 45);
             this.btnTableShow.Name = "btnTableShow";
-            this.btnTableShow.Size = new System.Drawing.Size(112, 98);
+            this.btnTableShow.Size = new System.Drawing.Size(170, 55);
             this.btnTableShow.TabIndex = 5;
             this.btnTableShow.Text = "Показать список выбранных таблиц";
             this.btnTableShow.UseVisualStyleBackColor = true;
@@ -183,9 +207,9 @@ namespace DBMigration
             // 
             this.listBoxTables.FormattingEnabled = true;
             this.listBoxTables.ItemHeight = 20;
-            this.listBoxTables.Location = new System.Drawing.Point(149, 45);
+            this.listBoxTables.Location = new System.Drawing.Point(207, 45);
             this.listBoxTables.Name = "listBoxTables";
-            this.listBoxTables.Size = new System.Drawing.Size(343, 344);
+            this.listBoxTables.Size = new System.Drawing.Size(285, 344);
             this.listBoxTables.TabIndex = 0;
             this.listBoxTables.SelectedIndexChanged += new System.EventHandler(this.listBoxTables_SelectedIndexChanged);
             // 
@@ -229,5 +253,7 @@ namespace DBMigration
         private Button btnTableShow;
         private ListBox listBoxFunctions;
         private ListBox listBoxProcedures;
+        private ListBox listBoxTrigger;
+        private Button btnTrigShow;
     }
 }

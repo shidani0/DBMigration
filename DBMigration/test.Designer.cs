@@ -6,7 +6,6 @@ namespace DBMigration
     partial class test
     {
         private System.ComponentModel.IContainer components = null;
-        private Label lblPanelMenuConnectionFrom;
 
         private Panel panelResizeMenu;
         private bool isResizing = false;
@@ -28,33 +27,20 @@ namespace DBMigration
         private void InitializeComponent()
         {
             this.panelMenu = new System.Windows.Forms.Panel();
-            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
             this.btnAction = new System.Windows.Forms.Button();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
-            this.panelMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // panelMenu
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
             this.panelMenu.Dock = System.Windows.Forms.DockStyle.Left;
             this.panelMenu.Location = new System.Drawing.Point(0, 0);
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(256, 544);
             this.panelMenu.TabIndex = 2;
-            // 
-            // lblPanelMenuConnectionFrom
-            // 
-            this.lblPanelMenuConnectionFrom.AutoSize = true;
-            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(4, 9);
-            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
-            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(239, 20);
-            this.lblPanelMenuConnectionFrom.TabIndex = 0;
-            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
             // 
             // panelContent
             // 
@@ -99,8 +85,6 @@ namespace DBMigration
             this.Controls.Add(this.panelMenu);
             this.Name = "test";
             this.Text = "Main Layout";
-            this.panelMenu.ResumeLayout(false);
-            this.panelMenu.PerformLayout();
             this.ResumeLayout(false);
 
         }
