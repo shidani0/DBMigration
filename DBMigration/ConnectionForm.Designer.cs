@@ -52,13 +52,14 @@ namespace DBMigration
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnConnect = new System.Windows.Forms.Button();
             this.panelMenu = new System.Windows.Forms.Panel();
-            this.panelContent = new System.Windows.Forms.Panel();
-            this.btnAction = new System.Windows.Forms.Button();
-            this.panelResizeMenu = new System.Windows.Forms.Panel();
-            this.label5 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
+            this.panelContent = new System.Windows.Forms.Panel();
+            this.label5 = new System.Windows.Forms.Label();
+            this.btnAction = new System.Windows.Forms.Button();
+            this.panelResizeMenu = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
             this.panelMenu.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.SuspendLayout();
@@ -185,6 +186,7 @@ namespace DBMigration
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMenu.Controls.Add(this.label3);
             this.panelMenu.Controls.Add(this.label2);
             this.panelMenu.Controls.Add(this.label1);
             this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
@@ -194,62 +196,6 @@ namespace DBMigration
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(277, 544);
             this.panelMenu.TabIndex = 2;
-            // 
-            // panelContent
-            // 
-            this.panelContent.BackColor = System.Drawing.Color.White;
-            this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelContent.Controls.Add(this.label5);
-            this.panelContent.Controls.Add(this.lblIp);
-            this.panelContent.Controls.Add(this.txtIp);
-            this.panelContent.Controls.Add(this.lblPort);
-            this.panelContent.Controls.Add(this.txtPort);
-            this.panelContent.Controls.Add(this.lblDbName);
-            this.panelContent.Controls.Add(this.txtDbName);
-            this.panelContent.Controls.Add(this.lblUser);
-            this.panelContent.Controls.Add(this.txtUser);
-            this.panelContent.Controls.Add(this.lblPassword);
-            this.panelContent.Controls.Add(this.txtPassword);
-            this.panelContent.Controls.Add(this.btnConnect);
-            this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.panelContent.Location = new System.Drawing.Point(277, 0);
-            this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(476, 544);
-            this.panelContent.TabIndex = 1;
-            // 
-            // btnAction
-            // 
-            this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAction.Location = new System.Drawing.Point(653, 494);
-            this.btnAction.Name = "btnAction";
-            this.btnAction.Size = new System.Drawing.Size(80, 30);
-            this.btnAction.TabIndex = 0;
-            this.btnAction.Text = "OK";
-            this.btnAction.UseVisualStyleBackColor = true;
-            // 
-            // panelResizeMenu
-            // 
-            this.panelResizeMenu.BackColor = System.Drawing.Color.DarkGray;
-            this.panelResizeMenu.Cursor = System.Windows.Forms.Cursors.VSplit;
-            this.panelResizeMenu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panelResizeMenu.Location = new System.Drawing.Point(277, 0);
-            this.panelResizeMenu.Name = "panelResizeMenu";
-            this.panelResizeMenu.Size = new System.Drawing.Size(5, 544);
-            this.panelResizeMenu.TabIndex = 0;
-            this.panelResizeMenu.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseDown);
-            this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
-            this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.label5.Location = new System.Drawing.Point(114, 8);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(238, 18);
-            this.label5.TabIndex = 11;
-            this.label5.Text = "Подключение к исходной БД";
             // 
             // label2
             // 
@@ -281,6 +227,72 @@ namespace DBMigration
             this.lblPanelMenuConnectionFrom.TabIndex = 4;
             this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
             // 
+            // panelContent
+            // 
+            this.panelContent.BackColor = System.Drawing.Color.White;
+            this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelContent.Controls.Add(this.label5);
+            this.panelContent.Controls.Add(this.lblIp);
+            this.panelContent.Controls.Add(this.txtIp);
+            this.panelContent.Controls.Add(this.lblPort);
+            this.panelContent.Controls.Add(this.txtPort);
+            this.panelContent.Controls.Add(this.lblDbName);
+            this.panelContent.Controls.Add(this.txtDbName);
+            this.panelContent.Controls.Add(this.lblUser);
+            this.panelContent.Controls.Add(this.txtUser);
+            this.panelContent.Controls.Add(this.lblPassword);
+            this.panelContent.Controls.Add(this.txtPassword);
+            this.panelContent.Controls.Add(this.btnConnect);
+            this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.panelContent.Location = new System.Drawing.Point(277, 0);
+            this.panelContent.Name = "panelContent";
+            this.panelContent.Size = new System.Drawing.Size(476, 544);
+            this.panelContent.TabIndex = 1;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.label5.Location = new System.Drawing.Point(114, 8);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(238, 18);
+            this.label5.TabIndex = 11;
+            this.label5.Text = "Подключение к исходной БД";
+            // 
+            // btnAction
+            // 
+            this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAction.Location = new System.Drawing.Point(653, 494);
+            this.btnAction.Name = "btnAction";
+            this.btnAction.Size = new System.Drawing.Size(80, 30);
+            this.btnAction.TabIndex = 0;
+            this.btnAction.Text = "OK";
+            this.btnAction.UseVisualStyleBackColor = true;
+            // 
+            // panelResizeMenu
+            // 
+            this.panelResizeMenu.BackColor = System.Drawing.Color.DarkGray;
+            this.panelResizeMenu.Cursor = System.Windows.Forms.Cursors.VSplit;
+            this.panelResizeMenu.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panelResizeMenu.Location = new System.Drawing.Point(277, 0);
+            this.panelResizeMenu.Name = "panelResizeMenu";
+            this.panelResizeMenu.Size = new System.Drawing.Size(5, 544);
+            this.panelResizeMenu.TabIndex = 0;
+            this.panelResizeMenu.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseDown);
+            this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
+            this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label3.Location = new System.Drawing.Point(3, 128);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(240, 20);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "3. Подключение к целевой БД";
+            // 
             // ConnectionForm
             // 
             this.ClientSize = new System.Drawing.Size(753, 544);
@@ -305,5 +317,6 @@ namespace DBMigration
         private Label label2;
         private Label label1;
         private Label lblPanelMenuConnectionFrom;
+        private Label label3;
     }
 }

@@ -277,15 +277,19 @@ namespace DBMigration
         {
             try
             {
-                string script = "-- PostgreSQL скрипт создания таблицы\n";
+                string script = $"-- PostgreSQL скрипт создания таблицы {tableName}\n";
 
-                // Получаем данные о колонках таблицы
                 string tableScriptQuery = @"
-        SELECT 
-            COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, 
-            IS_NULLABLE, NUMERIC_PRECISION, NUMERIC_SCALE 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_NAME = @tableName";
+SELECT 
+    COLUMN_NAME, 
+    DATA_TYPE, 
+    CHARACTER_MAXIMUM_LENGTH, 
+    IS_NULLABLE, 
+    NUMERIC_PRECISION, 
+    NUMERIC_SCALE 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = @tableName
+ORDER BY ORDINAL_POSITION";
 
                 using (SqlCommand cmd = new SqlCommand(tableScriptQuery, connection))
                 {
@@ -295,16 +299,26 @@ namespace DBMigration
                     var columns = new List<string>();
                     while (reader.Read())
                     {
-                        string columnDef = $"{reader["COLUMN_NAME"]} {ConvertToPostgresType(reader)}";
-                        if (reader["IS_NULLABLE"].ToString() == "NO")
+                        string columnName = reader["COLUMN_NAME"].ToString();
+                        string dataType = reader["DATA_TYPE"].ToString();
+                        string isNullable = reader["IS_NULLABLE"].ToString();
+                        object maxLength = reader["CHARACTER_MAXIMUM_LENGTH"];
+                        object precision = reader["NUMERIC_PRECISION"];
+                        object scale = reader["NUMERIC_SCALE"];
+
+                        string pgType = ConvertToPostgresType(dataType, maxLength, precision, scale);
+
+                        string columnDef = $"{columnName} {pgType}";
+                        if (isNullable == "NO")
                         {
                             columnDef += " NOT NULL";
                         }
+
                         columns.Add(columnDef);
                     }
                     reader.Close();
 
-                    script += $"CREATE TABLE {tableName} (\n" + string.Join(",\n", columns) + "\n);";
+                    script += $"CREATE TABLE {tableName} (\n    " + string.Join(",\n    ", columns) + "\n);";
                 }
 
                 return script;
@@ -320,115 +334,200 @@ namespace DBMigration
         {
             try
             {
-                string script = "-- PostgreSQL скрипт функции\n";
-                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID(@funcName))", connection);
-                command.Parameters.AddWithValue("@funcName", functionName);
-                SqlDataReader reader = command.ExecuteReader();
+                string script = $"-- PostgreSQL скрипт функции {functionName}\n";
 
-                if (reader.Read())
+                using (SqlCommand cmd = new SqlCommand("SELECT OBJECT_DEFINITION(OBJECT_ID(@funcName))", connection))
                 {
-                    string originalScript = reader.GetString(0);
-                    // Простая конвертация - в реальном проекте нужно более сложное преобразование
-                    script += originalScript
-                        .Replace("[", "\"")
-                        .Replace("]", "\"")
-                        .Replace("dbo.", "")
-                        .Replace("GETDATE()", "CURRENT_TIMESTAMP");
-                }
-                reader.Close();
-
-                if (string.IsNullOrEmpty(script))
-                {
-                    script = $"-- Не удалось получить текст функции: {functionName}\n";
+                    cmd.Parameters.AddWithValue("@funcName", functionName);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string rawCode = reader.GetString(0);
+                            script += ConvertToPostgresSyntax(rawCode)
+                                .Replace("CREATE FUNCTION", "CREATE OR REPLACE FUNCTION")
+                                .Replace("AS BEGIN", "AS $$ BEGIN")
+                                .Replace("END", "END; $$ LANGUAGE plpgsql;");
+                        }
+                    }
                 }
 
                 return script;
             }
             catch (Exception ex)
             {
-                return $"-- Ошибка генерации скрипта для функции {functionName}: {ex.Message}\n";
+                return $"-- Ошибка генерации скрипта для функции {functionName}: {ex.Message}";
             }
         }
+
+
 
         private string GetPostgresProcedureScript(SqlConnection connection, string procedureName)
         {
             try
             {
-                string script = "-- PostgreSQL скрипт процедуры\n";
-                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID(@procName))", connection);
-                command.Parameters.AddWithValue("@procName", procedureName);
-                SqlDataReader reader = command.ExecuteReader();
+                string script = $"-- PostgreSQL скрипт процедуры {procedureName}\n";
 
-                if (reader.Read())
+                using (SqlCommand cmd = new SqlCommand("SELECT OBJECT_DEFINITION(OBJECT_ID(@procName))", connection))
                 {
-                    string originalScript = reader.GetString(0);
-                    // Простая конвертация - в реальном проекте нужно более сложное преобразование
-                    script += originalScript
-                        .Replace("[", "\"")
-                        .Replace("]", "\"")
-                        .Replace("dbo.", "")
-                        .Replace("GETDATE()", "CURRENT_TIMESTAMP")
-                        .Replace("CREATE PROCEDURE", "CREATE OR REPLACE FUNCTION")
-                        .Replace("AS BEGIN", "RETURNS VOID AS $$ BEGIN")
-                        .Replace("END", "END; $$ LANGUAGE plpgsql;");
-                }
-                reader.Close();
-
-                if (string.IsNullOrEmpty(script))
-                {
-                    script = $"-- Не удалось получить текст процедуры: {procedureName}\n";
+                    cmd.Parameters.AddWithValue("@procName", procedureName);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string rawCode = reader.GetString(0);
+                            script += ConvertToPostgresSyntax(rawCode)
+                                .Replace("CREATE PROCEDURE", "CREATE OR REPLACE PROCEDURE")
+                                .Replace("AS BEGIN", "LANGUAGE plpgsql AS $$ BEGIN")
+                                .Replace("END", "END; $$");
+                        }
+                    }
                 }
 
                 return script;
             }
             catch (Exception ex)
             {
-                return $"-- Ошибка генерации скрипта для процедуры {procedureName}: {ex.Message}\n";
+                return $"-- Ошибка генерации скрипта для процедуры {procedureName}: {ex.Message}";
             }
         }
-        
+
+
+
 
         private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
         {
             try
             {
-                string script = "-- PostgreSQL скрипт триггера\n";
-                SqlCommand command = new SqlCommand($"SELECT OBJECT_DEFINITION(OBJECT_ID('{triggerName}'))", connection);
-                SqlDataReader reader = command.ExecuteReader();
+                string script = $"-- PostgreSQL скрипт триггера {triggerName}\n";
 
-                if (reader.Read())
+                using (SqlCommand cmd = new SqlCommand("SELECT OBJECT_DEFINITION(OBJECT_ID(@triggerName))", connection))
                 {
-                    // Конвертация текста триггера в PostgreSQL формат
-                    script += reader.GetString(0).Replace("INSERTED", "NEW")
-                                                .Replace("DELETED", "OLD");
+                    cmd.Parameters.AddWithValue("@triggerName", triggerName);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string rawCode = reader.GetString(0);
+                            script += ConvertToPostgresSyntax(rawCode)
+                                .Replace("INSERTED", "NEW")
+                                .Replace("DELETED", "OLD")
+                                .Replace("BEGIN", "BEGIN\n")
+                                .Replace("END", "END;");
+                        }
+                    }
                 }
-                reader.Close();
 
                 return script;
             }
             catch (Exception ex)
             {
-                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}\n";
+                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}";
             }
         }
-         
 
-        private string ConvertToPostgresType(SqlDataReader reader)
+
+
+
+        /// <summary>
+        /// Преобразует типы данных из MSSQL в PostgreSQL-совместимые.
+        /// </summary>
+        private string ConvertToPostgresType(string sqlType, object maxLength, object precision, object scale)
         {
-            string dataType = reader["DATA_TYPE"].ToString();
-
-            switch (dataType)
+            switch (sqlType.ToLower())
             {
-                case "varchar":
+                case "int":
+                case "integer":
+                    return "integer";
+                case "bigint":
+                    return "bigint";
+                case "smallint":
+                    return "smallint";
+                case "tinyint":
+                    return "smallint"; // PostgreSQL не поддерживает tinyint
+                case "bit":
+                    return "boolean";
                 case "nvarchar":
-                    return $"{dataType}({reader["CHARACTER_MAXIMUM_LENGTH"]})";
+                case "varchar":
+                    return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"varchar({maxLength})";
+                case "nchar":
+                case "char":
+                    return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"char({maxLength})";
+                case "text":
+                case "ntext":
+                    return "text";
+                case "datetime":
+                case "smalldatetime":
+                case "datetime2":
+                case "datetimeoffset":
+                    return "timestamp";
+                case "date":
+                    return "date";
+                case "time":
+                    return "time";
                 case "decimal":
                 case "numeric":
-                    return $"{dataType}({reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]})";
+                    return $"numeric({precision},{scale})";
+                case "float":
+                    return "double precision";
+                case "real":
+                    return "real";
+                case "uniqueidentifier":
+                    return "uuid";
+                case "binary":
+                case "varbinary":
+                case "image":
+                    return "bytea";
                 default:
-                    return dataType;
+                    return "text"; // по умолчанию
             }
         }
+
+        private string ConvertToPostgresSyntax(string sqlCode)
+        {
+            if (string.IsNullOrWhiteSpace(sqlCode))
+                return "-- Пустой объект, нечего конвертировать";
+
+            return sqlCode
+                // Общие символы
+                .Replace("[", "\"")
+                .Replace("]", "\"")
+                .Replace("dbo.", "")
+                .Replace("GETDATE()", "CURRENT_TIMESTAMP")
+                .Replace("NEWID()", "gen_random_uuid()")
+                .Replace("ISNULL", "COALESCE")
+                .Replace("SYSDATETIME()", "CURRENT_TIMESTAMP")
+                .Replace("TRY_CONVERT", "CAST")
+                .Replace("LEN(", "LENGTH(")
+                .Replace("INSERTED", "NEW")
+                .Replace("DELETED", "OLD")
+
+                // Типы данных
+                .Replace("INT IDENTITY", "SERIAL")
+                .Replace("INT", "INTEGER")
+                .Replace("BIGINT", "BIGINT")
+                .Replace("SMALLINT", "SMALLINT")
+                .Replace("TINYINT", "SMALLINT")
+                .Replace("BIT", "BOOLEAN")
+                .Replace("DECIMAL", "NUMERIC")
+                .Replace("NUMERIC", "NUMERIC")
+                .Replace("FLOAT", "DOUBLE PRECISION")
+                .Replace("REAL", "REAL")
+                .Replace("MONEY", "NUMERIC(19,4)")
+                .Replace("DATETIME", "TIMESTAMP")
+                .Replace("SMALLDATETIME", "TIMESTAMP")
+                .Replace("DATE", "DATE")
+                .Replace("TIME", "TIME")
+                .Replace("CHAR", "CHAR")
+                .Replace("NCHAR", "CHAR")
+                .Replace("VARCHAR", "VARCHAR")
+                .Replace("NVARCHAR", "VARCHAR")
+                .Replace("TEXT", "TEXT")
+                .Replace("NTEXT", "TEXT")
+                .Replace("IMAGE", "BYTEA")
+                .Replace("UNIQUEIDENTIFIER", "UUID");
+        }
+
 
         private void exportButton_Click(object sender, EventArgs e)
         {
@@ -513,6 +612,10 @@ namespace DBMigration
             listBoxFunctions.Visible = false;
         }
 
-
+        private void button1_Click(object sender, EventArgs e)
+        {
+            PosgreConnectionForm formPosgr = new PosgreConnectionForm();
+            formPosgr.Show();
+        }
     }
 }

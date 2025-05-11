@@ -13,7 +13,6 @@ namespace DBMigration
 
         private System.Windows.Forms.Panel panelMenu;
         private System.Windows.Forms.Panel panelContent;
-        private System.Windows.Forms.Button btnAction;
 
         protected override void Dispose(bool disposing)
         {
@@ -28,7 +27,6 @@ namespace DBMigration
         {
             this.panelMenu = new System.Windows.Forms.Panel();
             this.panelContent = new System.Windows.Forms.Panel();
-            this.btnAction = new System.Windows.Forms.Button();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
             this.SuspendLayout();
             // 
@@ -53,16 +51,6 @@ namespace DBMigration
             this.panelContent.Size = new System.Drawing.Size(497, 544);
             this.panelContent.TabIndex = 1;
             // 
-            // btnAction
-            // 
-            this.btnAction.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAction.Location = new System.Drawing.Point(653, 494);
-            this.btnAction.Name = "btnAction";
-            this.btnAction.Size = new System.Drawing.Size(80, 30);
-            this.btnAction.TabIndex = 0;
-            this.btnAction.Text = "OK";
-            this.btnAction.UseVisualStyleBackColor = true;
-            // 
             // panelResizeMenu
             // 
             this.panelResizeMenu.BackColor = System.Drawing.Color.DarkGray;
@@ -80,7 +68,6 @@ namespace DBMigration
             // 
             this.ClientSize = new System.Drawing.Size(753, 544);
             this.Controls.Add(this.panelResizeMenu);
-            this.Controls.Add(this.btnAction);
             this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panelMenu);
             this.Name = "test";

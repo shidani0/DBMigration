@@ -28,10 +28,13 @@ namespace DBMigration
         private void InitializeComponent()
         {
             this.panelMenu = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.btnTrigShow = new System.Windows.Forms.Button();
             this.listBoxTrigger = new System.Windows.Forms.ListBox();
             this.listBoxProcedures = new System.Windows.Forms.ListBox();
@@ -51,14 +54,26 @@ namespace DBMigration
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMenu.Controls.Add(this.label3);
             this.panelMenu.Controls.Add(this.label2);
             this.panelMenu.Controls.Add(this.label1);
             this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
             this.panelMenu.Dock = System.Windows.Forms.DockStyle.Left;
             this.panelMenu.Location = new System.Drawing.Point(0, 0);
             this.panelMenu.Name = "panelMenu";
-            this.panelMenu.Size = new System.Drawing.Size(256, 544);
+            this.panelMenu.Size = new System.Drawing.Size(277, 544);
             this.panelMenu.TabIndex = 2;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label3.Location = new System.Drawing.Point(3, 123);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(240, 20);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "3. Подключение к целевой БД";
+            this.label3.Visible = false;
             // 
             // label2
             // 
@@ -94,6 +109,8 @@ namespace DBMigration
             // 
             this.panelContent.BackColor = System.Drawing.Color.White;
             this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelContent.Controls.Add(this.button2);
+            this.panelContent.Controls.Add(this.button1);
             this.panelContent.Controls.Add(this.btnTrigShow);
             this.panelContent.Controls.Add(this.listBoxTrigger);
             this.panelContent.Controls.Add(this.listBoxProcedures);
@@ -106,18 +123,38 @@ namespace DBMigration
             this.panelContent.Controls.Add(this.listBoxTables);
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.panelContent.Location = new System.Drawing.Point(256, 0);
+            this.panelContent.Location = new System.Drawing.Point(277, 0);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(497, 544);
+            this.panelContent.Size = new System.Drawing.Size(476, 544);
             this.panelContent.TabIndex = 1;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(487, 451);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 13;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(361, 506);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(123, 33);
+            this.button1.TabIndex = 12;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Visible = false;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // btnTrigShow
             // 
-            this.btnTrigShow.Location = new System.Drawing.Point(31, 224);
+            this.btnTrigShow.Location = new System.Drawing.Point(10, 252);
             this.btnTrigShow.Name = "btnTrigShow";
-            this.btnTrigShow.Size = new System.Drawing.Size(170, 52);
+            this.btnTrigShow.Size = new System.Drawing.Size(170, 74);
             this.btnTrigShow.TabIndex = 11;
-            this.btnTrigShow.Text = "Показать список выбранных процедур";
+            this.btnTrigShow.Text = "Показать список выбранных триггеров";
             this.btnTrigShow.UseVisualStyleBackColor = true;
             this.btnTrigShow.Click += new System.EventHandler(this.btnTrigShow_Click);
             // 
@@ -125,7 +162,7 @@ namespace DBMigration
             // 
             this.listBoxTrigger.FormattingEnabled = true;
             this.listBoxTrigger.ItemHeight = 20;
-            this.listBoxTrigger.Location = new System.Drawing.Point(207, 45);
+            this.listBoxTrigger.Location = new System.Drawing.Point(186, 45);
             this.listBoxTrigger.Name = "listBoxTrigger";
             this.listBoxTrigger.Size = new System.Drawing.Size(285, 344);
             this.listBoxTrigger.TabIndex = 10;
@@ -135,7 +172,7 @@ namespace DBMigration
             // 
             this.listBoxProcedures.FormattingEnabled = true;
             this.listBoxProcedures.ItemHeight = 20;
-            this.listBoxProcedures.Location = new System.Drawing.Point(207, 45);
+            this.listBoxProcedures.Location = new System.Drawing.Point(186, 45);
             this.listBoxProcedures.Name = "listBoxProcedures";
             this.listBoxProcedures.Size = new System.Drawing.Size(285, 344);
             this.listBoxProcedures.TabIndex = 9;
@@ -145,7 +182,7 @@ namespace DBMigration
             // 
             this.listBoxFunctions.FormattingEnabled = true;
             this.listBoxFunctions.ItemHeight = 20;
-            this.listBoxFunctions.Location = new System.Drawing.Point(207, 45);
+            this.listBoxFunctions.Location = new System.Drawing.Point(186, 45);
             this.listBoxFunctions.Name = "listBoxFunctions";
             this.listBoxFunctions.Size = new System.Drawing.Size(285, 344);
             this.listBoxFunctions.TabIndex = 8;
@@ -153,9 +190,9 @@ namespace DBMigration
             // 
             // btnProcShow
             // 
-            this.btnProcShow.Location = new System.Drawing.Point(31, 166);
+            this.btnProcShow.Location = new System.Drawing.Point(10, 166);
             this.btnProcShow.Name = "btnProcShow";
-            this.btnProcShow.Size = new System.Drawing.Size(170, 52);
+            this.btnProcShow.Size = new System.Drawing.Size(170, 80);
             this.btnProcShow.TabIndex = 7;
             this.btnProcShow.Text = "Показать список выбранных процедур";
             this.btnProcShow.UseVisualStyleBackColor = true;
@@ -163,7 +200,8 @@ namespace DBMigration
             // 
             // btnFuncShow
             // 
-            this.btnFuncShow.Location = new System.Drawing.Point(31, 106);
+            this.btnFuncShow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnFuncShow.Location = new System.Drawing.Point(10, 106);
             this.btnFuncShow.Name = "btnFuncShow";
             this.btnFuncShow.Size = new System.Drawing.Size(170, 54);
             this.btnFuncShow.TabIndex = 6;
@@ -173,7 +211,7 @@ namespace DBMigration
             // 
             // btnTableShow
             // 
-            this.btnTableShow.Location = new System.Drawing.Point(31, 45);
+            this.btnTableShow.Location = new System.Drawing.Point(10, 45);
             this.btnTableShow.Name = "btnTableShow";
             this.btnTableShow.Size = new System.Drawing.Size(170, 55);
             this.btnTableShow.TabIndex = 5;
@@ -184,18 +222,18 @@ namespace DBMigration
             // convertToPostgresButton
             // 
             this.convertToPostgresButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 506);
+            this.convertToPostgresButton.Location = new System.Drawing.Point(10, 469);
             this.convertToPostgresButton.Name = "convertToPostgresButton";
-            this.convertToPostgresButton.Size = new System.Drawing.Size(231, 33);
+            this.convertToPostgresButton.Size = new System.Drawing.Size(252, 62);
             this.convertToPostgresButton.TabIndex = 4;
-            this.convertToPostgresButton.Text = "Конвертировать в PG";
+            this.convertToPostgresButton.Text = "Конвертировать и сохранить в PG";
             this.convertToPostgresButton.UseVisualStyleBackColor = true;
             this.convertToPostgresButton.Click += new System.EventHandler(this.convertToPostgresButton_Click);
             // 
             // exportButton
             // 
             this.exportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.exportButton.Location = new System.Drawing.Point(10, 462);
+            this.exportButton.Location = new System.Drawing.Point(10, 425);
             this.exportButton.Name = "exportButton";
             this.exportButton.Size = new System.Drawing.Size(252, 38);
             this.exportButton.TabIndex = 3;
@@ -207,7 +245,7 @@ namespace DBMigration
             // 
             this.listBoxTables.FormattingEnabled = true;
             this.listBoxTables.ItemHeight = 20;
-            this.listBoxTables.Location = new System.Drawing.Point(207, 45);
+            this.listBoxTables.Location = new System.Drawing.Point(186, 45);
             this.listBoxTables.Name = "listBoxTables";
             this.listBoxTables.Size = new System.Drawing.Size(285, 344);
             this.listBoxTables.TabIndex = 0;
@@ -218,7 +256,7 @@ namespace DBMigration
             this.panelResizeMenu.BackColor = System.Drawing.Color.DarkGray;
             this.panelResizeMenu.Cursor = System.Windows.Forms.Cursors.VSplit;
             this.panelResizeMenu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panelResizeMenu.Location = new System.Drawing.Point(256, 0);
+            this.panelResizeMenu.Location = new System.Drawing.Point(277, 0);
             this.panelResizeMenu.Name = "panelResizeMenu";
             this.panelResizeMenu.Size = new System.Drawing.Size(5, 544);
             this.panelResizeMenu.TabIndex = 0;
@@ -255,5 +293,8 @@ namespace DBMigration
         private ListBox listBoxProcedures;
         private ListBox listBoxTrigger;
         private Button btnTrigShow;
+        private Label label3;
+        private Button button2;
+        private Button button1;
     }
 }
