@@ -60,9 +60,8 @@ namespace DBMigration
             this.lblProgress.AutoSize = true;
             this.lblProgress.Location = new System.Drawing.Point(24, 485);
             this.lblProgress.Name = "lblProgress";
-            this.lblProgress.Size = new System.Drawing.Size(51, 20);
+            this.lblProgress.Size = new System.Drawing.Size(0, 20);
             this.lblProgress.TabIndex = 5;
-            this.lblProgress.Text = "label3";
             // 
             // progressBar
             // 
