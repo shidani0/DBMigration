@@ -142,9 +142,9 @@ namespace DBMigration
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.label2.Location = new System.Drawing.Point(3, 68);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(199, 60);
+            this.label2.Size = new System.Drawing.Size(186, 60);
             this.label2.TabIndex = 6;
-            this.label2.Text = "2.1.Сравнения структуры\nобъектов исходной\nи целевой БД";
+            this.label2.Text = "3.Сравнения структуры\nобъектов исходной\nи целевой БД";
             // 
             // panelMenu
             // 
@@ -168,7 +168,7 @@ namespace DBMigration
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(240, 20);
             this.label3.TabIndex = 9;
-            this.label3.Text = "3. Подключение к целевой БД";
+            this.label3.Text = "4. Подключение к целевой БД";
             // 
             // MainForm
             // 

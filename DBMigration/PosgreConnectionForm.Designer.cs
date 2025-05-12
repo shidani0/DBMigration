@@ -41,12 +41,12 @@ namespace DBMigration
             this.txtPort = new System.Windows.Forms.TextBox();
             this.txtHost = new System.Windows.Forms.TextBox();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.btnConnect = new System.Windows.Forms.Button();
             this.lblIp = new System.Windows.Forms.Label();
             this.lblPort = new System.Windows.Forms.Label();
             this.lblDbName = new System.Windows.Forms.Label();
             this.lblUser = new System.Windows.Forms.Label();
             this.lblPassword = new System.Windows.Forms.Label();
-            this.btnConnect = new System.Windows.Forms.Button();
             this.panelMenu.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.SuspendLayout();
@@ -73,7 +73,7 @@ namespace DBMigration
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(149, 36);
             this.label3.TabIndex = 0;
-            this.label3.Text = "3. Подключение к\nцелевой БД";
+            this.label3.Text = "4. Подключение к\nцелевой БД";
             // 
             // label2
             // 
@@ -81,9 +81,9 @@ namespace DBMigration
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.label2.Location = new System.Drawing.Point(3, 68);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(199, 60);
+            this.label2.Size = new System.Drawing.Size(186, 60);
             this.label2.TabIndex = 1;
-            this.label2.Text = "2.1.Сравнение структуры\nобъектов исходной\nи целевой БД";
+            this.label2.Text = "3.Сравнение структуры\nобъектов исходной\nи целевой БД";
             // 
             // label1
             // 
@@ -185,6 +185,18 @@ namespace DBMigration
             this.panelContent.Size = new System.Drawing.Size(471, 544);
             this.panelContent.TabIndex = 0;
             // 
+            // btnConnect
+            // 
+            this.btnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnConnect.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.btnConnect.Location = new System.Drawing.Point(8, 177);
+            this.btnConnect.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.btnConnect.Name = "btnConnect";
+            this.btnConnect.Size = new System.Drawing.Size(451, 37);
+            this.btnConnect.TabIndex = 16;
+            this.btnConnect.Text = "Подключиться";
+            // 
             // lblIp
             // 
             this.lblIp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
@@ -234,18 +246,6 @@ namespace DBMigration
             this.lblPassword.Size = new System.Drawing.Size(135, 26);
             this.lblPassword.TabIndex = 15;
             this.lblPassword.Text = "Пароль:";
-            // 
-            // btnConnect
-            // 
-            this.btnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnConnect.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.btnConnect.Location = new System.Drawing.Point(8, 177);
-            this.btnConnect.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
-            this.btnConnect.Name = "btnConnect";
-            this.btnConnect.Size = new System.Drawing.Size(451, 37);
-            this.btnConnect.TabIndex = 16;
-            this.btnConnect.Text = "Подключиться";
             // 
             // PosgreConnectionForm
             // 

@@ -52,6 +52,7 @@ namespace DBMigration
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnConnect = new System.Windows.Forms.Button();
             this.panelMenu = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
@@ -59,7 +60,6 @@ namespace DBMigration
             this.label5 = new System.Windows.Forms.Label();
             this.btnAction = new System.Windows.Forms.Button();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
-            this.label3 = new System.Windows.Forms.Label();
             this.panelMenu.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.SuspendLayout();
@@ -197,15 +197,25 @@ namespace DBMigration
             this.panelMenu.Size = new System.Drawing.Size(277, 544);
             this.panelMenu.TabIndex = 2;
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label3.Location = new System.Drawing.Point(3, 128);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(240, 20);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "4. Подключение к целевой БД";
+            // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.label2.Location = new System.Drawing.Point(3, 68);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(199, 60);
+            this.label2.Size = new System.Drawing.Size(186, 60);
             this.label2.TabIndex = 6;
-            this.label2.Text = "2.1.Сравнения структуры\nобъектов исходной\nи целевой БД";
+            this.label2.Text = "3.Сравнения структуры\nобъектов исходной\nи целевой БД";
             // 
             // label1
             // 
@@ -282,16 +292,6 @@ namespace DBMigration
             this.panelResizeMenu.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseDown);
             this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
             this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label3.Location = new System.Drawing.Point(3, 128);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(240, 20);
-            this.label3.TabIndex = 9;
-            this.label3.Text = "3. Подключение к целевой БД";
             // 
             // ConnectionForm
             // 
