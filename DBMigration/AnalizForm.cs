@@ -11,6 +11,7 @@ using System.Data.SqlClient;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.IO;
 using static DBMigration.MainForm;
+using System.Text.RegularExpressions;
 
 namespace DBMigration
 {
@@ -395,6 +396,7 @@ ORDER BY ORDINAL_POSITION";
 
 
 
+        /*
         private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
         {
             try
@@ -424,6 +426,102 @@ ORDER BY ORDINAL_POSITION";
             {
                 return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}";
             }
+        }
+         */
+
+        private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
+        {
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(@"
+            SELECT 
+                tr.name AS TriggerName,
+                tb.name AS TableName,
+                m.definition AS TriggerBody,
+                tr.is_instead_of_trigger,
+                tr.type_desc
+            FROM sys.triggers tr
+            JOIN sys.tables tb ON tr.parent_id = tb.object_id
+            JOIN sys.sql_modules m ON tr.object_id = m.object_id
+            WHERE tr.name = @triggerName", connection))
+                {
+                    cmd.Parameters.AddWithValue("@triggerName", triggerName);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string name = reader.GetString(0);
+                            string table = reader.GetString(1);
+                            string body = reader.GetString(2);
+                            string typeDesc = reader.GetString(4);
+
+                            // Преобразуем тело триггера
+                            string pgBody = ConvertToPostgresTriggerFunctionBody(body);
+
+                            // Определяем тип операции
+                            string operation = typeDesc.Contains("DELETE") ? "DELETE"
+                                             : typeDesc.Contains("INSERT") ? "INSERT"
+                                             : typeDesc.Contains("UPDATE") ? "UPDATE"
+                                             : "UNKNOWN";
+
+                            string functionName = $"trg_{table}_{operation.ToLower()}";
+                            string triggerNamePg = $"{table}_{operation.ToLower()}";
+
+                            // Генерация функции триггера
+                            string functionScript = $@"
+-- Триггерная функция
+CREATE OR REPLACE FUNCTION {functionName}()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_user TEXT := current_user;
+    v_ip TEXT;
+BEGIN
+    -- Получение IP-адреса клиента, если доступно
+    BEGIN
+        SELECT inet_client_addr() INTO v_ip;
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_ip := 'unknown';
+    END;
+
+    {pgBody}
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;";
+
+                            // Генерация триггера
+                            string triggerScript = $@"
+-- Создание триггера
+DROP TRIGGER IF EXISTS {triggerNamePg} ON {table};
+
+CREATE TRIGGER {triggerNamePg}
+AFTER {operation} ON {table}
+FOR EACH ROW
+EXECUTE FUNCTION {functionName}();";
+
+                            return functionScript + "\n\n" + triggerScript;
+                        }
+                    }
+                }
+
+                return $"-- Триггер {triggerName} не найден.";
+            }
+            catch (Exception ex)
+            {
+                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}";
+            }
+        }
+
+        private string ConvertToPostgresTriggerFunctionBody(string sqlServerBody)
+        {
+            return sqlServerBody
+                .Replace("INSERTED", "NEW")
+                .Replace("DELETED", "OLD")
+                .Replace("BEGIN", "") // BEGIN уже есть в шаблоне
+                .Replace("END", "")   // END тоже
+                .Replace(";", ";")    // Можно доп. обработку здесь
+                .Trim();
         }
 
 
@@ -555,30 +653,24 @@ ORDER BY ORDINAL_POSITION";
             string date = DateTime.Now.ToString("dd-MM-yyyy");
 
             int exportCount = 0;
-
-            // Название родительской папки
             string folderName = $"Экспорт_{date}";
             string exportFolderPath = Path.Combine(basePath, folderName);
             Directory.CreateDirectory(exportFolderPath);
 
-            foreach (var item in listBoxTables.Items)
+            foreach (var dbObject in originalScripts)
             {
-                string objectName = item.ToString();
+                if (dbObject == null || string.IsNullOrWhiteSpace(dbObject.Script) || string.IsNullOrWhiteSpace(dbObject.Name))
+                    continue;
 
-                // Ищем объект в списке
-                var dbObject = originalScripts.FirstOrDefault(o => o.Name == objectName);
-                if (dbObject != null)
-                {
-                    string safeName = string.Concat(objectName.Split(Path.GetInvalidFileNameChars()));
-                    string filePath = Path.Combine(exportFolderPath, $"{safeName}__{date}.sql");
-                    File.WriteAllText(filePath, dbObject.Script);
-                    exportCount++;
-                }
+                string safeName = Regex.Replace(dbObject.Name, $"[{Regex.Escape(new string(Path.GetInvalidFileNameChars()))}]", "_");
+                string filePath = Path.Combine(exportFolderPath, $"{safeName}__{date}.sql");
+
+                File.WriteAllText(filePath, dbObject.Script, Encoding.UTF8);
+                exportCount++;
             }
 
             MessageBox.Show($"Экспорт завершён!\nСоздано файлов: {exportCount}\nПуть: {exportFolderPath}", "Успешно");
         }
-
 
 
         private void btnTableShow_Click(object sender, EventArgs e)

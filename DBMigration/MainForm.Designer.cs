@@ -35,6 +35,7 @@ namespace DBMigration
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.panelMenu = new System.Windows.Forms.Panel();
+            this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.panelContent.SuspendLayout();
             this.panelMenu.SuspendLayout();
@@ -149,6 +150,7 @@ namespace DBMigration
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMenu.Controls.Add(this.label4);
             this.panelMenu.Controls.Add(this.label3);
             this.panelMenu.Controls.Add(this.label2);
             this.panelMenu.Controls.Add(this.label1);
@@ -158,6 +160,16 @@ namespace DBMigration
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(277, 544);
             this.panelMenu.TabIndex = 2;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label4.Location = new System.Drawing.Point(3, 148);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(190, 40);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "4.1. Выгрузка объектов \n в целевую БД";
             // 
             // label3
             // 
@@ -194,5 +206,6 @@ namespace DBMigration
         private Label label1;
         private Label lblPanelMenuConnectionFrom;
         private Label label3;
+        private Label label4;
     }
 }
