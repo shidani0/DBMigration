@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.IO;
-using System.Text;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using Microsoft.SqlServer.Management.Smo;
-using Microsoft.SqlServer.Management.Common;
-using Microsoft.SqlServer.Management.Sdk.Sfc;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Drawing;
+using System.Text;
+using System.Linq;
 
 
 namespace DBMigration
@@ -75,6 +72,9 @@ namespace DBMigration
         private int totalItems = 0;
         private int loadedItems = 0;
 
+        private TreeNode[] originalNodes;
+
+
         private async Task LoadTreeViewAsync()
         {
             try
@@ -87,13 +87,13 @@ namespace DBMigration
                     loadedItems = 0;
 
                     TreeNode tablesRoot = new TreeNode("Таблицы");
-                    treeView.Nodes.Add(tablesRoot); // Сразу добавляем корневой узел
+                    treeView.Nodes.Add(tablesRoot);
                     treeView.Refresh();
 
-                    // --- Загружаем таблицы и триггеры ---
+                    // Получаем список таблиц
                     var tableNames = new List<string>();
                     SqlCommand tableCommand = new SqlCommand(
-                        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
+                        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME ASC;",
                         connection);
                     SqlDataReader tableReader = await tableCommand.ExecuteReaderAsync();
                     while (await tableReader.ReadAsync())
@@ -108,31 +108,117 @@ namespace DBMigration
                         tablesRoot.Nodes.Add(tableNode);
                         IncrementProgress();
                         treeView.Refresh();
-                        //await Task.Delay(0); // небольшая задержка для отрисовки
 
+                        // Структура таблицы (поля) - без CheckBox
+                        TreeNode structureNode = CreateNonCheckableNode("Структура");
+                        tableNode.Nodes.Add(structureNode);
+
+                        // Запрос для получения информации о столбцах
+                        SqlCommand columnCommand = new SqlCommand(@"
+                            SELECT 
+                                c.COLUMN_NAME, 
+                                c.DATA_TYPE, 
+                                c.IS_NULLABLE, 
+                                c.CHARACTER_MAXIMUM_LENGTH,
+                                CASE 
+                                    WHEN pk.CONSTRAINT_NAME IS NOT NULL THEN 'PK'
+                                    ELSE ''
+                                END AS IsPrimaryKey,
+                                CASE 
+                                    WHEN fk.CONSTRAINT_NAME IS NOT NULL THEN 'FK'
+                                    ELSE ''
+                                END AS IsForeignKey
+                            FROM INFORMATION_SCHEMA.COLUMNS c
+                            LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE pk 
+                                ON c.TABLE_NAME = pk.TABLE_NAME 
+                                AND c.COLUMN_NAME = pk.COLUMN_NAME 
+                                AND pk.CONSTRAINT_NAME LIKE 'PK_%'
+                            LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk 
+                                ON c.TABLE_NAME = fk.TABLE_NAME 
+                                AND c.COLUMN_NAME = fk.COLUMN_NAME 
+                                AND fk.CONSTRAINT_NAME LIKE 'FK_%'
+                            WHERE c.TABLE_NAME = @tableName;", connection);
+                        columnCommand.Parameters.AddWithValue("@tableName", table);
+
+                        SqlDataReader columnReader = await columnCommand.ExecuteReaderAsync();
+                        while (await columnReader.ReadAsync())
+                        {
+                            string columnName = columnReader["COLUMN_NAME"].ToString();
+                            string dataType = columnReader["DATA_TYPE"].ToString();
+                            string isNullable = columnReader["IS_NULLABLE"].ToString();
+                            string maxLength = columnReader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value
+                                ? $"({columnReader["CHARACTER_MAXIMUM_LENGTH"]})"
+                                : "";
+                            string isPrimaryKey = columnReader["IsPrimaryKey"].ToString();
+                            string isForeignKey = columnReader["IsForeignKey"].ToString();
+
+                            // Формирование строки с информацией о столбце, включая PK/FK
+                            string columnInfo = $"{columnName} - {dataType}{maxLength} {(isNullable == "YES" ? "NULL" : "NOT NULL")}" +
+                                               $"{(isPrimaryKey == "PK" ? " PK" : "")}{(isForeignKey == "FK" ? " FK" : "")}";
+                            TreeNode columnNode = CreateNonCheckableNode(columnInfo);
+                            structureNode.Nodes.Add(columnNode);
+                        }
+                        columnReader.Close();
+
+                        // Внешние ключи (таблицы, на которые ссылается) - без CheckBox
+                        TreeNode referencesNode = CreateNonCheckableNode("Ссылается на");
+                        tableNode.Nodes.Add(referencesNode);
+
+                        SqlCommand fkCommand = new SqlCommand(@"
+                    SELECT 
+                        OBJECT_NAME(fk.referenced_object_id) AS referenced_table,
+                        c1.name AS referencing_column,
+                        c2.name AS referenced_column
+                    FROM 
+                        sys.foreign_keys fk
+                        INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
+                        INNER JOIN sys.columns c1 ON fkc.parent_object_id = c1.object_id AND fkc.parent_column_id = c1.column_id
+                        INNER JOIN sys.columns c2 ON fkc.referenced_object_id = c2.object_id AND fkc.referenced_column_id = c2.column_id
+                    WHERE 
+                        OBJECT_NAME(fk.parent_object_id) = @tableName
+                    ORDER BY 
+                        referenced_table;", connection);
+                        fkCommand.Parameters.AddWithValue("@tableName", table);
+
+                        SqlDataReader fkReader = await fkCommand.ExecuteReaderAsync();
+                        while (await fkReader.ReadAsync())
+                        {
+                            string refTable = fkReader["referenced_table"].ToString();
+                            string referencingColumn = fkReader["referencing_column"].ToString();
+                            string referencedColumn = fkReader["referenced_column"].ToString();
+                            TreeNode refNode = CreateNonCheckableNode($"{refTable} ({referencingColumn} → {referencedColumn})");
+                            referencesNode.Nodes.Add(refNode);
+                        }
+                        fkReader.Close();
+
+                        // Триггеры (с CheckBox)
                         SqlCommand triggerCommand = new SqlCommand(@"
                     SELECT name FROM sys.triggers
                     WHERE parent_id = OBJECT_ID(@tableName);", connection);
                         triggerCommand.Parameters.AddWithValue("@tableName", table);
 
                         SqlDataReader triggerReader = await triggerCommand.ExecuteReaderAsync();
+                        TreeNode triggersNode = new TreeNode("Триггеры");
+                        bool hasTriggers = false;
                         while (await triggerReader.ReadAsync())
                         {
                             string triggerName = triggerReader["name"].ToString();
-                            TreeNode triggerNode = new TreeNode(triggerName);
-                            tableNode.Nodes.Add(triggerNode);
+                            triggersNode.Nodes.Add(new TreeNode(triggerName));
+                            hasTriggers = true;
                             IncrementProgress();
-                            treeView.Refresh();
-                            //await Task.Delay(1);
                         }
                         triggerReader.Close();
+
+                        if (hasTriggers)
+                            tableNode.Nodes.Add(triggersNode);
+
+                        treeView.Refresh();
                     }
 
                     // --- Скалярные функции ---
                     TreeNode scalarFuncsRoot = new TreeNode("Скалярные функции");
                     treeView.Nodes.Add(scalarFuncsRoot);
                     treeView.Refresh();
-                    //await Task.Delay(1);
 
                     SqlCommand scalarFuncCmd = new SqlCommand(@"
                 SELECT SCHEMA_NAME(schema_id) AS schema_name, name
@@ -145,7 +231,6 @@ namespace DBMigration
                         scalarFuncsRoot.Nodes.Add(new TreeNode(funcName));
                         IncrementProgress();
                         treeView.Refresh();
-                        //await Task.Delay(1);
                     }
                     scalarFuncReader.Close();
 
@@ -153,7 +238,6 @@ namespace DBMigration
                     TreeNode tableFuncsRoot = new TreeNode("Табличные функции");
                     treeView.Nodes.Add(tableFuncsRoot);
                     treeView.Refresh();
-                    //await Task.Delay(1);
 
                     SqlCommand tableFuncCmd = new SqlCommand(@"
                 SELECT SCHEMA_NAME(schema_id) AS schema_name, name
@@ -166,9 +250,9 @@ namespace DBMigration
                         tableFuncsRoot.Nodes.Add(new TreeNode(funcName));
                         IncrementProgress();
                         treeView.Refresh();
-                        //await Task.Delay(1);
                     }
                     tableFuncReader.Close();
+
                     // --- Хранимые процедуры ---
                     TreeNode proceduresRoot = new TreeNode("Хранимые процедуры");
                     treeView.Nodes.Add(proceduresRoot);
@@ -192,10 +276,220 @@ namespace DBMigration
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка загрузки: " + ex.Message);
+
+                ConnectionForm connect = new ConnectionForm();
+                connect.Show();
+                this.Hide();
+            }
+
+            originalNodes = new TreeNode[treeView.Nodes.Count];
+            treeView.Nodes.CopyTo(originalNodes, 0);
+        }
+
+        private TreeNode CreateNonCheckableNode(string text)
+        {
+            var node = new TreeNode(text)
+            {
+                ForeColor = SystemColors.GrayText,
+                Checked = false
+            };
+            return node;
+        }
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            string searchText = txtSearch.Text.ToLower();
+
+            // 1. Сохраняем список выбранных элементов
+            var selectedNodes = new List<string>();
+            if (originalNodes != null)
+            {
+                SaveSelectedNodes(treeView.Nodes, selectedNodes);
+            }
+
+            treeView.BeginUpdate();
+            treeView.Nodes.Clear();
+
+            // 2. Применяем фильтрацию
+            foreach (TreeNode rootNode in originalNodes)
+            {
+                TreeNode newNode = FilterNodeBySecondLevel(rootNode, searchText);
+                if (newNode != null)
+                    treeView.Nodes.Add(newNode);
+            }
+
+            // 3. Восстанавливаем выбранные элементы
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                RestoreSelectedNodes(treeView.Nodes, selectedNodes);
+            }
+
+            treeView.EndUpdate();
+        }
+
+        private TreeNode FilterNodeBySecondLevel(TreeNode originalNode, string searchText)
+        {
+            // Всегда включаем корневой узел
+            TreeNode newNode = new TreeNode(originalNode.Text)
+            {
+                Tag = originalNode.Tag,
+                ImageIndex = originalNode.ImageIndex,
+                SelectedImageIndex = originalNode.SelectedImageIndex
+            };
+
+            // Если строка поиска пустая, копируем все узлы
+            if (string.IsNullOrEmpty(searchText))
+            {
+                CopyChildNodes(originalNode, newNode);
+                return newNode;
+            }
+
+            bool hasVisibleChildren = false;
+
+            // Проверяем только узлы второго уровня (детей корневого узла)
+            foreach (TreeNode secondLevelNode in originalNode.Nodes)
+            {
+                bool secondLevelMatches = secondLevelNode.Text.ToLower().Contains(searchText);
+
+                // Если узел второго уровня совпадает, добавляем его и всех его детей
+                if (secondLevelMatches)
+                {
+                    TreeNode newSecondLevelNode = CloneTreeNode(secondLevelNode);
+                    newNode.Nodes.Add(newSecondLevelNode);
+                    hasVisibleChildren = true;
+                }
+                else
+                {
+                    // Если не совпадает, проверяем есть ли совпадения в детях (третьем уровне и ниже)
+                    TreeNode filteredNode = FilterChildren(secondLevelNode, searchText);
+                    if (filteredNode != null)
+                    {
+                        newNode.Nodes.Add(filteredNode);
+                        hasVisibleChildren = true;
+                    }
+                }
+            }
+
+            // Если у корневого узла есть видимые дети, оставляем его
+            if (hasVisibleChildren || originalNode.Text.ToLower().Contains(searchText))
+            {
+                return newNode;
+            }
+
+            return null;
+        }
+
+        private TreeNode FilterChildren(TreeNode originalNode, string searchText)
+        {
+            // Проверяем, есть ли совпадения в текущем узле или его потомках
+            bool selfMatches = originalNode.Text.ToLower().Contains(searchText);
+            bool childMatches = false;
+
+            TreeNode newNode = new TreeNode(originalNode.Text)
+            {
+                Tag = originalNode.Tag,
+                ImageIndex = originalNode.ImageIndex,
+                SelectedImageIndex = originalNode.SelectedImageIndex
+            };
+
+            // Рекурсивно проверяем детей
+            foreach (TreeNode child in originalNode.Nodes)
+            {
+                TreeNode filteredChild = FilterChildren(child, searchText);
+                if (filteredChild != null)
+                {
+                    newNode.Nodes.Add(filteredChild);
+                    childMatches = true;
+                }
+            }
+
+            // Если текущий узел или его дети совпадают, возвращаем узел
+            if (selfMatches || childMatches)
+            {
+                return newNode;
+            }
+
+            return null;
+        }
+
+        private TreeNode CloneTreeNode(TreeNode originalNode)
+        {
+            TreeNode newNode = new TreeNode(originalNode.Text)
+            {
+                Tag = originalNode.Tag,
+                ImageIndex = originalNode.ImageIndex,
+                SelectedImageIndex = originalNode.SelectedImageIndex
+            };
+
+            foreach (TreeNode child in originalNode.Nodes)
+            {
+                newNode.Nodes.Add(CloneTreeNode(child));
+            }
+
+            return newNode;
+        }
+
+        private void CopyChildNodes(TreeNode sourceNode, TreeNode destNode)
+        {
+            foreach (TreeNode child in sourceNode.Nodes)
+            {
+                TreeNode newChild = CloneTreeNode(child);
+                destNode.Nodes.Add(newChild);
             }
         }
 
+        // Метод для сохранения выбранных узлов
+        private void SaveSelectedNodes(TreeNodeCollection nodes, List<string> selectedNodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Checked)
+                {
+                    selectedNodes.Add(node.FullPath);
+                }
+                SaveSelectedNodes(node.Nodes, selectedNodes);
+            }
+        }
 
+        // Метод для восстановления выбранных узлов
+        private void RestoreSelectedNodes(TreeNodeCollection nodes, List<string> selectedNodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (selectedNodes.Contains(node.FullPath))
+                {
+                    node.Checked = true;
+                }
+                RestoreSelectedNodes(node.Nodes, selectedNodes);
+            }
+        }
+
+        // Фильтрация узлов (остаётся без изменений)
+        private TreeNode FilterNode(TreeNode node, string searchText)
+        {
+            TreeNode filteredNode = null;
+
+            // Рекурсивно фильтруем дочерние узлы
+            foreach (TreeNode child in node.Nodes)
+            {
+                TreeNode filteredChild = FilterNode(child, searchText);
+                if (filteredChild != null)
+                {
+                    if (filteredNode == null)
+                        filteredNode = new TreeNode(node.Text);
+
+                    filteredNode.Nodes.Add(filteredChild);
+                }
+            }
+
+            // Добавляем узел, если он сам соответствует фильтру
+            if (node.Text.ToLower().Contains(searchText))
+            {
+                if (filteredNode == null)
+                    filteredNode = new TreeNode(node.Text);
+            }
+
+            return filteredNode;
+        }
 
         private void IncrementProgress()
         {
@@ -203,6 +497,7 @@ namespace DBMigration
             int percent = (int)((loadedItems / (float)totalItems) * 100);
             progressBar.Value = Math.Min(percent, 100);
             lblProgress.Text = $"Загрузка {percent}%... {loadedItems}/{totalItems} ";
+            if (percent == 95) Task.Delay(1000);
         }
 
         private async Task<int> GetTotalItemsAsync(SqlConnection connection)
@@ -236,8 +531,6 @@ namespace DBMigration
             return count;
         }
 
-
-
         private void TreeView_AfterCheck(object sender, TreeViewEventArgs e)
         {
             treeView.AfterCheck -= TreeView_AfterCheck;
@@ -260,11 +553,6 @@ namespace DBMigration
                 SetCheckedRecursive(child, isChecked);
             }
         }
-
-
-        
-
-
 
         private string GetTriggerCreationScript(SqlConnection connection, string triggerName)
         {
@@ -302,33 +590,90 @@ namespace DBMigration
         private void btnExport_Click(object sender, EventArgs e)
         {
             List<DbObject> selectedScripts = new();
+            Dictionary<string, List<string>> missingReferences = new();
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
 
+                // Собираем список всех выбранных таблиц
+                HashSet<string> selectedTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (TreeNode rootNode in treeView.Nodes)
                 {
-                    /*
-                     
                     if (rootNode.Text == "Таблицы")
                     {
                         foreach (TreeNode tableNode in rootNode.Nodes)
                         {
                             if (tableNode.Checked)
                             {
-                                string tableName = tableNode.Text;
-                                string originalScript = GetTableCreationScript(connection, tableName);
-                                selectedScripts.Add(new DbObject
-                                {
-                                    Name = tableName,
-                                    Script = originalScript,
-                                    Type = "Таблица"
-                                });
+                                selectedTables.Add(tableNode.Text);
                             }
                         }
                     }
-                   */
+                }
+
+                // Проверяем зависимости только если есть выбранные таблицы
+                if (selectedTables.Count > 0)
+                {
+                    foreach (TreeNode rootNode in treeView.Nodes)
+                    {
+                        if (rootNode.Text == "Таблицы")
+                        {
+                            foreach (TreeNode tableNode in rootNode.Nodes)
+                            {
+                                if (tableNode.Checked)
+                                {
+                                    string tableName = tableNode.Text;
+                                    List<string> references = GetTableReferences(connection, tableName);
+
+                                    // Фильтруем ссылки, оставляем только те, которые не выбраны
+                                    List<string> missingRefs = references
+                                        .Where(refTable => !selectedTables.Contains(refTable))
+                                        .ToList();
+
+                                    if (missingRefs.Count > 0)
+                                    {
+                                        missingReferences[tableName] = missingRefs;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Показываем предупреждение только если есть невыбранные зависимости
+                if (missingReferences.Count > 0)
+                {
+                    StringBuilder warningMessage = new StringBuilder();
+                    warningMessage.AppendLine("Следующие выбранные таблицы имеют ссылки на невыбранные таблицы:");
+                    warningMessage.AppendLine();
+
+                    foreach (var kvp in missingReferences)
+                    {
+                        warningMessage.AppendLine($"- {kvp.Key} ссылается на:");
+                        foreach (var refTable in kvp.Value)
+                        {
+                            warningMessage.AppendLine($"  • {refTable}");
+                        }
+                        warningMessage.AppendLine();
+                    }
+
+                    warningMessage.AppendLine("Рекомендуется также выбрать эти таблицы для корректной миграции.");
+
+                    var result = MessageBox.Show(warningMessage.ToString(),
+                                               "Предупреждение о зависимостях",
+                                               MessageBoxButtons.OKCancel,
+                                               MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.Cancel)
+                    {
+                        return; // Прерываем экспорт, если пользователь нажал Cancel
+                    }
+                }
+
+                // Продолжаем экспорт
+                foreach (TreeNode rootNode in treeView.Nodes)
+                {
                     if (rootNode.Text == "Таблицы")
                     {
                         foreach (TreeNode tableNode in rootNode.Nodes)
@@ -345,19 +690,21 @@ namespace DBMigration
                                 });
                             }
 
-                            // Обработка дочерних узлов таблицы — например, триггеров
                             foreach (TreeNode childNode in tableNode.Nodes)
                             {
-                                if (childNode.Checked)
+                                if (childNode.Checked && childNode.Text == "Триггеры")
                                 {
-                                    string triggerName = childNode.Text;
-                                    string triggerScript = GetTriggerCreationScript(connection, triggerName);
-                                    selectedScripts.Add(new DbObject
+                                    foreach (TreeNode triggerNode in childNode.Nodes)
                                     {
-                                        Name = triggerName,
-                                        Script = triggerScript,
-                                        Type = "Триггер"
-                                    });
+                                        string triggerName = triggerNode.Text;
+                                        string triggerScript = GetTriggerCreationScript(connection, triggerName);
+                                        selectedScripts.Add(new DbObject
+                                        {
+                                            Name = triggerName,
+                                            Script = triggerScript,
+                                            Type = "Триггер"
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -401,6 +748,36 @@ namespace DBMigration
 
             AnalizForm formAn = new AnalizForm(selectedScripts, connectionString);
             formAn.Show();
+        }
+
+        // Новый метод для получения списка таблиц, на которые ссылается указанная таблица
+        private List<string> GetTableReferences(SqlConnection connection, string tableName)
+        {
+            List<string> references = new List<string>();
+
+            string query = @"
+SELECT DISTINCT 
+    OBJECT_NAME(fk.referenced_object_id) AS referenced_table
+FROM 
+    sys.foreign_keys fk
+    INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
+    INNER JOIN sys.tables tab ON fk.parent_object_id = tab.object_id
+WHERE 
+    tab.name = @tableName";
+
+            using (SqlCommand cmd = new SqlCommand(query, connection))
+            {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        references.Add(reader["referenced_table"].ToString());
+                    }
+                }
+            }
+
+            return references;
         }
 
         private string GetTableCreationScript(SqlConnection connection, string tableName)
@@ -583,25 +960,11 @@ WHERE tab1.name = @tableName;
             }
         }
 
-
-        /*
-        private List<string> GetCheckedItems(TreeNodeCollection nodes)
+        private void label3_Click(object sender, EventArgs e)
         {
-            List<string> checkedItems = new List<string>();
-
-            foreach (TreeNode node in nodes)
-            {
-                if (node.Checked)
-                    checkedItems.Add(node.Text);
-
-                if (node.Nodes.Count > 0)
-                    checkedItems.AddRange(GetCheckedItems(node.Nodes));
-            }
-
-            return checkedItems;
+            PosgreConnectionForm formPosgr = new PosgreConnectionForm();
+            formPosgr.Show();
         }
-         */
-
 
     }
 }

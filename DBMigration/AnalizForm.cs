@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.SqlClient;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.IO;
 using static DBMigration.MainForm;
 using System.Text.RegularExpressions;
 
 namespace DBMigration
 {
+    
     public partial class AnalizForm : Form
     {
+        private Dictionary<string, TableExportSettings> tableExportSettings = new Dictionary<string, TableExportSettings>();
+
         private void panelResizeMenu_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -89,15 +88,36 @@ namespace DBMigration
         {
             if (listBoxTables.SelectedItem != null)
             {
-                string selectedItem = listBoxTables.SelectedItem.ToString();
+                string selectedTable = listBoxTables.SelectedItem.ToString();
 
-                // Здесь можно подгрузить или сформировать информацию об изменениях
-                string info = GetItemChangeInfo(selectedItem);
+                // Создаем или получаем настройки для таблицы
+                if (!tableExportSettings.TryGetValue(selectedTable, out var settings))
+                {
+                    settings = new TableExportSettings { TableName = selectedTable };
+                    tableExportSettings[selectedTable] = settings;
+                }
 
-                // Показываем окно с информацией
-                MessageBox.Show(info, "Информация об изменении", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                using (var percentForm = new DataExportPercentageForm())
+                {
+                    // Устанавливаем текущий процент для формы
+                    percentForm.SelectedPercentage = settings.ExportPercent;
+
+                    if (percentForm.ShowDialog() == DialogResult.OK)
+                    {
+                        // Сохраняем выбранный процент
+                        settings.ExportPercent = percentForm.SelectedPercentage;
+
+                        MessageBox.Show(
+                            $"Для таблицы '{selectedTable}' установлен экспорт {settings.ExportPercent}% данных.",
+                            "Настройки экспорта",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information
+                        );
+                    }
+                }
             }
         }
+
         private void listBoxTrigger_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listBoxTrigger.SelectedItem != null)
@@ -182,12 +202,11 @@ namespace DBMigration
 
 
 
-
         private void convertToPostgresButton_Click(object sender, EventArgs e)
         {
             try
             {
-                ConvertToPostgres();
+                ConvertToPostgres(); 
             }
             catch (Exception ex)
             {
@@ -223,10 +242,27 @@ namespace DBMigration
                 foreach (var item in listBoxTables.Items)
                 {
                     string tableName = item.ToString();
+
+                    // Получаем настройки экспорта для этой таблицы
+                    int exportPercent = 100; // значение по умолчанию
+                    if (tableExportSettings.TryGetValue(tableName, out var settings))
+                    {
+                        exportPercent = settings.ExportPercent;
+                    }
+
+                    // Получение скрипта таблицы
                     var script = $"-- Таблица: {tableName}\n" + GetPostgresTableScript(connection, tableName);
+
+                    // Если процент меньше 100, добавляем данные
+                    if (exportPercent <= 100)
+                    {
+                        script += "\n\n-- Данные таблицы (" + exportPercent + "%):\n";
+                        script += GetPostgresTableData(connection, tableName, exportPercent);
+                    }
                     grouped["Таблицы"].Add((tableName, script));
                     tablesCount++;
                 }
+
 
                 foreach (var item in listBoxTrigger.Items)
                 {
@@ -255,7 +291,7 @@ namespace DBMigration
                     procsCount++;
                 }
 
-                string folderName = $"Таблицы_{tablesCount}_Триггеры{trigCount}_Функции_{funcsCount}_Процедуры_{procsCount}__{date}";
+                string folderName = $"PG_Таблицы_{tablesCount}_Триггеры{trigCount}_Функции_{funcsCount}_Процедуры_{procsCount}";
                 string exportFolderPath = Path.Combine(basePath, folderName);
                 Directory.CreateDirectory(exportFolderPath);
 
@@ -273,6 +309,127 @@ namespace DBMigration
             }
         }
 
+        private string GetPostgresTableData(SqlConnection connection, string tableName, int percent)
+        {
+            try
+            {
+                StringBuilder dataScript = new StringBuilder();
+
+                // 1. Проверяем наличие автоинкрементных полей и отключаем их
+                string identityCheckQuery = $@"
+SELECT c.name AS column_name
+FROM sys.columns c
+JOIN sys.tables t ON c.object_id = t.object_id
+WHERE t.name = '{tableName}' AND c.is_identity = 1";
+
+                List<string> identityColumns = new List<string>();
+                using (SqlCommand cmd = new SqlCommand(identityCheckQuery, connection))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        identityColumns.Add(reader["column_name"].ToString());
+                    }
+                }
+
+                // Добавляем команды для отключения автоинкремента (если есть такие поля)
+                foreach (var column in identityColumns)
+                {
+                    dataScript.AppendLine($"ALTER TABLE {tableName} ALTER COLUMN {column} DROP IDENTITY;");
+                }
+
+                // 2. Получить количество строк в таблице
+                string countQuery = $"SELECT COUNT(*) FROM {tableName}";
+                int totalRows = 0;
+                using (SqlCommand cmd = new SqlCommand(countQuery, connection))
+                {
+                    totalRows = (int)cmd.ExecuteScalar();
+                }
+
+                // 3. Вычислить количество строк для выборки
+                int rowsToSelect = (int)Math.Round(totalRows * percent / 100.0);
+                if (rowsToSelect < 1) rowsToSelect = 1;
+
+                // 4. Получить данные
+                string dataQuery = $@"
+SELECT * FROM (
+    SELECT *, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum 
+    FROM {tableName}
+) AS T 
+WHERE RowNum <= {rowsToSelect}";
+
+                using (SqlCommand cmd = new SqlCommand(dataQuery, connection))
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        // Получить список столбцов (исключая RowNum)
+                        var columns = new List<string>();
+                        for (int i = 0; i < reader.FieldCount - 1; i++) // -1 чтобы исключить RowNum
+                        {
+                            columns.Add(reader.GetName(i));
+                        }
+
+                        // Генерация INSERT-запросов для PostgreSQL
+                        while (reader.Read())
+                        {
+                            var values = new List<string>();
+                            for (int i = 0; i < reader.FieldCount - 1; i++) // -1 чтобы исключить RowNum
+                            {
+                                if (reader.IsDBNull(i))
+                                {
+                                    values.Add("NULL");
+                                }
+                                else
+                                {
+                                    var value = reader.GetValue(i);
+                                    // Форматирование значений для PostgreSQL
+                                    if (value is string || value is Guid)
+                                    {
+                                        values.Add($"'{value.ToString().Replace("'", "''")}'");
+                                    }
+                                    else if (value is DateTime)
+                                    {
+                                        values.Add($"'{(DateTime)value:yyyy-MM-dd HH:mm:ss}'::timestamp");
+                                    }
+                                    else if (value is DateTimeOffset)
+                                    {
+                                        values.Add($"'{(DateTimeOffset)value:yyyy-MM-dd HH:mm:sszzz}'::timestamp with time zone");
+                                    }
+                                    else if (value is bool)
+                                    {
+                                        values.Add((bool)value ? "TRUE" : "FALSE");
+                                    }
+                                    else if (value is byte[])
+                                    {
+                                        values.Add($"E'\\\\x{BitConverter.ToString((byte[])value).Replace("-", "")}'");
+                                    }
+                                    else
+                                    {
+                                        values.Add(value.ToString());
+                                    }
+                                }
+                            }
+
+                            dataScript.AppendLine($"INSERT INTO {tableName} ({string.Join(", ", columns)}) " +
+                                                 $"VALUES ({string.Join(", ", values)});");
+                        }
+                    }
+                }
+
+                // Восстанавливаем автоинкрементные поля (если они были)
+                foreach (var column in identityColumns)
+                {
+                    dataScript.AppendLine($"ALTER TABLE {tableName} ALTER COLUMN {column} ADD GENERATED BY DEFAULT AS IDENTITY;");
+                }
+
+                return dataScript.ToString();
+            }
+            catch (Exception ex)
+            {
+                return $"-- Ошибка при выгрузке данных: {ex.Message}\n";
+            }
+        }
 
         private string GetPostgresTableScript(SqlConnection connection, string tableName)
         {
@@ -280,17 +437,24 @@ namespace DBMigration
             {
                 string script = $"-- PostgreSQL скрипт создания таблицы {tableName}\n";
 
+                // Запрос для получения информации о столбцах, включая IDENTITY
                 string tableScriptQuery = @"
 SELECT 
-    COLUMN_NAME, 
-    DATA_TYPE, 
-    CHARACTER_MAXIMUM_LENGTH, 
-    IS_NULLABLE, 
-    NUMERIC_PRECISION, 
-    NUMERIC_SCALE 
-FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_NAME = @tableName
-ORDER BY ORDINAL_POSITION";
+    c.name AS COLUMN_NAME,
+    tp.name AS DATA_TYPE,
+    c.max_length AS CHARACTER_MAXIMUM_LENGTH,
+    c.is_nullable AS IS_NULLABLE,
+    c.precision AS NUMERIC_PRECISION,
+    c.scale AS NUMERIC_SCALE,
+    c.is_identity AS IS_IDENTITY,
+    IDENT_SEED(TABLE_SCHEMA + '.' + TABLE_NAME) AS IDENTITY_SEED,
+    IDENT_INCR(TABLE_SCHEMA + '.' + TABLE_NAME) AS IDENTITY_INCREMENT
+FROM sys.columns c
+JOIN sys.tables t ON c.object_id = t.object_id
+JOIN sys.types tp ON c.user_type_id = tp.user_type_id
+JOIN INFORMATION_SCHEMA.TABLES it ON t.name = it.TABLE_NAME
+WHERE t.name = @tableName
+ORDER BY c.column_id";
 
                 using (SqlCommand cmd = new SqlCommand(tableScriptQuery, connection))
                 {
@@ -306,11 +470,31 @@ ORDER BY ORDINAL_POSITION";
                         object maxLength = reader["CHARACTER_MAXIMUM_LENGTH"];
                         object precision = reader["NUMERIC_PRECISION"];
                         object scale = reader["NUMERIC_SCALE"];
+                        bool isIdentity = Convert.ToBoolean(reader["IS_IDENTITY"]);
+                        object identitySeed = reader["IDENTITY_SEED"];
+                        object identityIncrement = reader["IDENTITY_INCREMENT"];
 
                         string pgType = ConvertToPostgresType(dataType, maxLength, precision, scale);
 
                         string columnDef = $"{columnName} {pgType}";
-                        if (isNullable == "NO")
+
+                        // Добавляем IDENTITY для PostgreSQL (GENERATED BY DEFAULT AS IDENTITY)
+                        if (isIdentity)
+                        {
+                            columnDef += " GENERATED BY DEFAULT AS IDENTITY";
+                            // Добавляем параметры SEQUENCE если они отличаются от стандартных
+                            if (identitySeed != DBNull.Value && identityIncrement != DBNull.Value)
+                            {
+                                int seed = Convert.ToInt32(identitySeed);
+                                int increment = Convert.ToInt32(identityIncrement);
+
+                                if (seed != 1 || increment != 1)
+                                {
+                                    columnDef += $" (START WITH {seed} INCREMENT BY {increment})";
+                                }
+                            }
+                        }
+                        else if (isNullable == "NO")
                         {
                             columnDef += " NOT NULL";
                         }
@@ -319,7 +503,37 @@ ORDER BY ORDINAL_POSITION";
                     }
                     reader.Close();
 
-                    script += $"CREATE TABLE {tableName} (\n    " + string.Join(",\n    ", columns) + "\n);";
+                    // Добавляем первичные ключи
+                    string pkQuery = @"
+SELECT c.name AS COLUMN_NAME
+FROM sys.indexes i
+JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+JOIN sys.tables t ON i.object_id = t.object_id
+WHERE i.is_primary_key = 1 AND t.name = @tableName
+ORDER BY ic.key_ordinal";
+
+                    var pkColumns = new List<string>();
+                    using (SqlCommand pkCmd = new SqlCommand(pkQuery, connection))
+                    {
+                        pkCmd.Parameters.AddWithValue("@tableName", tableName);
+                        using (SqlDataReader pkReader = pkCmd.ExecuteReader())
+                        {
+                            while (pkReader.Read())
+                            {
+                                pkColumns.Add(pkReader["COLUMN_NAME"].ToString());
+                            }
+                        }
+                    }
+
+                    script += $"CREATE TABLE {tableName} (\n    " + string.Join(",\n    ", columns);
+
+                    if (pkColumns.Count > 0)
+                    {
+                        script += $",\n    PRIMARY KEY ({string.Join(", ", pkColumns)})";
+                    }
+
+                    script += "\n);";
                 }
 
                 return script;
@@ -327,6 +541,78 @@ ORDER BY ORDINAL_POSITION";
             catch (Exception ex)
             {
                 return $"-- Ошибка генерации скрипта для таблицы {tableName}: {ex.Message}\n";
+            }
+        }
+
+        private string ConvertToPostgresType(string sqlServerType, object maxLength, object precision, object scale)
+        {
+            switch (sqlServerType.ToLower())
+            {
+                case "varchar":
+                case "nvarchar":
+                    if (maxLength != DBNull.Value)
+                    {
+                        int length = Convert.ToInt32(maxLength);
+                        if (length == -1) return "TEXT"; // для MAX
+                        if (length > 0) return $"VARCHAR({length})"; // явно указываем VARCHAR для PostgreSQL
+                        return "TEXT"; // для нулевой длины или других случаев
+                    }
+                    return "TEXT";
+                case "char":
+                case "nchar":
+                    if (maxLength != DBNull.Value && Convert.ToInt32(maxLength) > 0)
+                    {
+                        int length = Convert.ToInt32(maxLength);
+                        if (length == -1) return "TEXT"; // для MAX
+                        return $"{sqlServerType.ToUpper()}({length})";
+                    }
+                    return "TEXT";
+
+                case "int":
+                    return "INTEGER";
+                case "bigint":
+                    return "BIGINT";
+                case "smallint":
+                    return "SMALLINT";
+                case "tinyint":
+                    return "SMALLINT"; // в PostgreSQL нет tinyint, используем smallint
+                case "bit":
+                    return "BOOLEAN";
+                case "float":
+                    return "DOUBLE PRECISION";
+                case "real":
+                    return "REAL";
+                case "decimal":
+                case "numeric":
+                    if (precision != DBNull.Value && scale != DBNull.Value)
+                        return $"NUMERIC({precision}, {scale})";
+                    return "NUMERIC";
+                case "money":
+                    return "MONEY";
+                case "date":
+                    return "DATE";
+                case "datetime":
+                    return "TIMESTAMP";
+                case "datetime2":
+                    return "TIMESTAMP";
+                case "smalldatetime":
+                    return "TIMESTAMP";
+                case "time":
+                    return "TIME";
+                case "timestamp":
+                    return "TIMESTAMP";
+                case "uniqueidentifier":
+                    return "UUID";
+                case "binary":
+                case "varbinary":
+                case "image":
+                    return "BYTEA";
+                case "xml":
+                    return "XML";
+                case "json":
+                    return "JSON";
+                default:
+                    return sqlServerType.ToUpper();
             }
         }
 
@@ -392,42 +678,6 @@ ORDER BY ORDINAL_POSITION";
                 return $"-- Ошибка генерации скрипта для процедуры {procedureName}: {ex.Message}";
             }
         }
-
-
-
-
-        /*
-        private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
-        {
-            try
-            {
-                string script = $"-- PostgreSQL скрипт триггера {triggerName}\n";
-
-                using (SqlCommand cmd = new SqlCommand("SELECT OBJECT_DEFINITION(OBJECT_ID(@triggerName))", connection))
-                {
-                    cmd.Parameters.AddWithValue("@triggerName", triggerName);
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            string rawCode = reader.GetString(0);
-                            script += ConvertToPostgresSyntax(rawCode)
-                                .Replace("INSERTED", "NEW")
-                                .Replace("DELETED", "OLD")
-                                .Replace("BEGIN", "BEGIN\n")
-                                .Replace("END", "END;");
-                        }
-                    }
-                }
-
-                return script;
-            }
-            catch (Exception ex)
-            {
-                return $"-- Ошибка генерации скрипта для триггера {triggerName}: {ex.Message}";
-            }
-        }
-         */
 
         private string GetPostgresTriggerScript(SqlConnection connection, string triggerName)
         {
@@ -530,56 +780,56 @@ EXECUTE FUNCTION {functionName}();";
         /// <summary>
         /// Преобразует типы данных из MSSQL в PostgreSQL-совместимые.
         /// </summary>
-        private string ConvertToPostgresType(string sqlType, object maxLength, object precision, object scale)
-        {
-            switch (sqlType.ToLower())
-            {
-                case "int":
-                case "integer":
-                    return "integer";
-                case "bigint":
-                    return "bigint";
-                case "smallint":
-                    return "smallint";
-                case "tinyint":
-                    return "smallint"; // PostgreSQL не поддерживает tinyint
-                case "bit":
-                    return "boolean";
-                case "nvarchar":
-                case "varchar":
-                    return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"varchar({maxLength})";
-                case "nchar":
-                case "char":
-                    return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"char({maxLength})";
-                case "text":
-                case "ntext":
-                    return "text";
-                case "datetime":
-                case "smalldatetime":
-                case "datetime2":
-                case "datetimeoffset":
-                    return "timestamp";
-                case "date":
-                    return "date";
-                case "time":
-                    return "time";
-                case "decimal":
-                case "numeric":
-                    return $"numeric({precision},{scale})";
-                case "float":
-                    return "double precision";
-                case "real":
-                    return "real";
-                case "uniqueidentifier":
-                    return "uuid";
-                case "binary":
-                case "varbinary":
-                case "image":
-                    return "bytea";
-                default:
-                    return "text"; // по умолчанию
-            }
-        }
+    //         private string ConvertToPostgresType(string sqlType, object maxLength, object precision, object scale)
+    //         {
+    //             switch (sqlType.ToLower())
+    //             {
+    //                 case "int":
+    //                 case "integer":
+    //                     return "integer";
+    //                 case "bigint":
+    //                     return "bigint";
+    //                 case "smallint":
+    //                     return "smallint";
+    //                 case "tinyint":
+    //                     return "smallint"; // PostgreSQL не поддерживает tinyint
+    //                 case "bit":
+    //                     return "boolean";
+    //                 case "nvarchar":
+    //                 case "varchar":
+    //                     return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"varchar({maxLength})";
+    //                 case "nchar":
+    //                 case "char":
+    //                     return (maxLength == DBNull.Value || (int)maxLength < 0) ? "text" : $"char({maxLength})";
+    //                 case "text":
+    //                 case "ntext":
+    //                     return "text";
+    //                 case "datetime":
+    //                 case "smalldatetime":
+    //                 case "datetime2":
+    //                 case "datetimeoffset":
+    //                     return "timestamp";
+    //                 case "date":
+    //                     return "date";
+    //                 case "time":
+    //                     return "time";
+    //                 case "decimal":
+    //                 case "numeric":
+    //                     return $"numeric({precision},{scale})";
+    //                 case "float":
+    //                     return "double precision";
+    //                 case "real":
+    //                     return "real";
+    //                 case "uniqueidentifier":
+    //                     return "uuid";
+    //                 case "binary":
+    //                 case "varbinary":
+    //                 case "image":
+    //                     return "bytea";
+    //                 default:
+    //                     return "text"; // по умолчанию
+    //             }
+    //         }
 
         private string ConvertToPostgresSyntax(string sqlCode)
         {
@@ -709,5 +959,10 @@ EXECUTE FUNCTION {functionName}();";
             PosgreConnectionForm formPosgr = new PosgreConnectionForm();
             formPosgr.Show();
         }
+    }
+    public class TableExportSettings
+    {
+        public string TableName { get; set; }
+        public int ExportPercent { get; set; } = 100; // По умолчанию 100%
     }
 }

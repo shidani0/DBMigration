@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Npgsql;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
@@ -47,16 +41,13 @@ namespace DBMigration
             }
         }
         private string connectionString;
+        private TreeNode[] originalNodes;
+
 
         public ImportToPosgreForm(string connStr)
         {
             InitializeComponent();
             connectionString = connStr;
-            LoadDatabaseObjects();
-        }
-
-        private void ImportToPostgreForm_Load(object sender, EventArgs e)
-        {
             LoadDatabaseObjects();
         }
 
@@ -156,10 +147,57 @@ namespace DBMigration
             {
                 MessageBox.Show("Ошибка при загрузке объектов БД:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            originalNodes = new TreeNode[treeView.Nodes.Count];
+            treeView.Nodes.CopyTo(originalNodes, 0);
+
+        }
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            string searchText = txtSearch.Text.ToLower();
+
+            treeView.BeginUpdate();
+            treeView.Nodes.Clear();
+
+            foreach (TreeNode rootNode in originalNodes)
+            {
+                TreeNode newNode = FilterNode(rootNode, searchText);
+                if (newNode != null)
+                    treeView.Nodes.Add(newNode);
+            }
+
+            treeView.EndUpdate();
         }
 
-        private List<string> sqlScriptPaths = new List<string>();
-        private string selectedFolderPath = "";
+        private TreeNode FilterNode(TreeNode node, string searchText)
+        {
+            TreeNode filteredNode = null;
+
+            // Рекурсивно фильтруем дочерние узлы
+            foreach (TreeNode child in node.Nodes)
+            {
+                TreeNode filteredChild = FilterNode(child, searchText);
+                if (filteredChild != null)
+                {
+                    if (filteredNode == null)
+                        filteredNode = new TreeNode(node.Text);
+
+                    filteredNode.Nodes.Add(filteredChild);
+                }
+            }
+
+            // Добавляем узел, если он сам соответствует фильтру
+            if (node.Text.ToLower().Contains(searchText))
+            {
+                if (filteredNode == null)
+                    filteredNode = new TreeNode(node.Text);
+            }
+
+            return filteredNode;
+        }
+
+
+        private List<string> sqlScriptPaths = new List<string>(); // Полные пути ко всем скриптам
+        private string selectedFolderPath = string.Empty;
 
         private void btnSelectFolder_Click(object sender, EventArgs e)
         {
@@ -176,13 +214,34 @@ namespace DBMigration
                     foreach (var file in files)
                     {
                         sqlScriptPaths.Add(file);
-                        checkedListBoxScripts.Items.Add(Path.GetFileName(file), true);
+                        checkedListBoxScripts.Items.Add(Path.GetFileName(file), false);
                     }
 
                     MessageBox.Show($"Загружено скриптов: {files.Length}", "Успешно", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
+
+
+
+        private void txtSearchLoadScripts_TextChanged(object sender, EventArgs e)
+        {
+            string searchText = txtSearchLoadScripts.Text.ToLower();
+            checkedListBoxScripts.Items.Clear();
+
+            foreach (var filePath in sqlScriptPaths)
+            {
+                string fileName = Path.GetFileName(filePath);
+                if (fileName.ToLower().Contains(searchText))
+                {
+                    bool isChecked = checkedFileNames.Contains(fileName);
+                    checkedListBoxScripts.Items.Add(fileName, isChecked);
+                }
+            }
+        }
+
+
+
 
         private void btnExecuteScripts_Click(object sender, EventArgs e)
         {
@@ -193,6 +252,7 @@ namespace DBMigration
             }
 
             List<string> skippedScripts = new List<string>();
+            List<string> succeededScripts = new List<string>();
 
             try
             {
@@ -213,6 +273,7 @@ namespace DBMigration
                                 using (var cmd = new Npgsql.NpgsqlCommand(script, conn))
                                 {
                                     cmd.ExecuteNonQuery();
+                                    succeededScripts.Add(scriptName); // Добавляем в список успешных
                                 }
                             }
                             catch (PostgresException pgEx) when (pgEx.SqlState == "42P07")
@@ -231,6 +292,13 @@ namespace DBMigration
                     }
 
                     string message = "Скрипты выполнены успешно.";
+
+                    if (succeededScripts.Count > 0)
+                    {
+                        message += "\n\nУспешно выполнены следующие скрипты:\n" +
+                                   string.Join("\n", succeededScripts);
+                    }
+
                     if (skippedScripts.Count > 0)
                     {
                         message += "\n\nСледующие объекты уже существовали и не были пересозданы:\n" +
@@ -243,6 +311,24 @@ namespace DBMigration
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка при подключении:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            LoadDatabaseObjects();
+        }
+
+        private HashSet<string> checkedFileNames = new HashSet<string>();
+
+        private void checkedListBoxScripts_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            string fileName = checkedListBoxScripts.Items[e.Index].ToString();
+
+            // Изменение произойдет после этого события, поэтому обрабатываем "вперёд"
+            if (e.NewValue == CheckState.Checked)
+            {
+                checkedFileNames.Add(fileName);
+            }
+            else if (e.NewValue == CheckState.Unchecked)
+            {
+                checkedFileNames.Remove(fileName);
             }
         }
 

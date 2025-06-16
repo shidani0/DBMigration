@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Windows.Forms;
 using Npgsql;
 
@@ -38,26 +37,6 @@ namespace DBMigration
             if (e.Button == MouseButtons.Left)
                 isResizing = false;
         }
-
-        /*
-        private void btnConnect_Click(object sender, EventArgs e)
-        {
-            string connStr = $"Host={txtHost.Text};Port={txtPort.Text};Username={txtUser.Text};Password={txtPassword.Text};Database={txtDatabase.Text}";
-
-            try
-            {
-                using (var conn = new NpgsqlConnection(connStr))
-                {
-                    conn.Open();
-                    MessageBox.Show("Успешное подключение к PostgreSQL!", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка подключения:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-         */
         private void btnConnect_Click(object sender, EventArgs e)
         {
             string connStr = $"Host={txtHost.Text};Port={txtPort.Text};Username={txtUser.Text};Password={txtPassword.Text};Database={txtDatabase.Text}";

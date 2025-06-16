@@ -283,6 +283,12 @@
     <Compile Include="ConnectionForm.Designer.cs">
       <DependentUpon>ConnectionForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="DataExportPercentageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DataExportPercentageForm.Designer.cs">
+      <DependentUpon>DataExportPercentageForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="ImportToPosgreForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -314,6 +320,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ConnectionForm.resx">
       <DependentUpon>ConnectionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DataExportPercentageForm.resx">
+      <DependentUpon>DataExportPercentageForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ImportToPosgreForm.resx">
       <DependentUpon>ImportToPosgreForm.cs</DependentUpon>

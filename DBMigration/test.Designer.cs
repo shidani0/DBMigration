@@ -26,13 +26,14 @@ namespace DBMigration
         private void InitializeComponent()
         {
             this.panelMenu = new System.Windows.Forms.Panel();
-            this.panelContent = new System.Windows.Forms.Panel();
-            this.panelResizeMenu = new System.Windows.Forms.Panel();
+            this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
+            this.panelContent = new System.Windows.Forms.Panel();
+            this.panelResizeMenu = new System.Windows.Forms.Panel();
+            this.label5 = new System.Windows.Forms.Label();
             this.panelMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -40,6 +41,7 @@ namespace DBMigration
             // 
             this.panelMenu.BackColor = System.Drawing.Color.LightGray;
             this.panelMenu.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMenu.Controls.Add(this.label5);
             this.panelMenu.Controls.Add(this.label4);
             this.panelMenu.Controls.Add(this.label3);
             this.panelMenu.Controls.Add(this.lblPanelMenuConnectionFrom);
@@ -50,6 +52,58 @@ namespace DBMigration
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(256, 544);
             this.panelMenu.TabIndex = 2;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label4.Location = new System.Drawing.Point(3, 148);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(190, 40);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "4.1. Выгрузка объектов \n в целевую БД";
+            this.label4.Visible = false;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label3.Location = new System.Drawing.Point(3, 128);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(240, 20);
+            this.label3.TabIndex = 13;
+            this.label3.Text = "4. Подключение к целевой БД";
+            this.label3.Visible = false;
+            // 
+            // lblPanelMenuConnectionFrom
+            // 
+            this.lblPanelMenuConnectionFrom.AutoSize = true;
+            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(3, 8);
+            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
+            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(239, 20);
+            this.lblPanelMenuConnectionFrom.TabIndex = 10;
+            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label2.Location = new System.Drawing.Point(3, 68);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(186, 60);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "3.Сравнения структуры\nобъектов исходной\nи целевой БД";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label1.Location = new System.Drawing.Point(3, 28);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(223, 40);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
             // 
             // panelContent
             // 
@@ -75,57 +129,16 @@ namespace DBMigration
             this.panelResizeMenu.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseMove);
             this.panelResizeMenu.MouseUp += new System.Windows.Forms.MouseEventHandler(this.panelResizeMenu_MouseUp);
             // 
-            // label3
+            // label5
             // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label3.Location = new System.Drawing.Point(3, 128);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(240, 20);
-            this.label3.TabIndex = 13;
-            this.label3.Text = "4. Подключение к целевой БД";
-            this.label3.Visible = false;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label2.Location = new System.Drawing.Point(3, 68);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(186, 60);
-            this.label2.TabIndex = 12;
-            this.label2.Text = "3.Сравнения структуры\nобъектов исходной\nи целевой БД";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label1.Location = new System.Drawing.Point(3, 28);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(223, 40);
-            this.label1.TabIndex = 11;
-            this.label1.Text = "2. Выбор и анализ объектов\nисходной БД";
-            // 
-            // lblPanelMenuConnectionFrom
-            // 
-            this.lblPanelMenuConnectionFrom.AutoSize = true;
-            this.lblPanelMenuConnectionFrom.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblPanelMenuConnectionFrom.Location = new System.Drawing.Point(3, 8);
-            this.lblPanelMenuConnectionFrom.Name = "lblPanelMenuConnectionFrom";
-            this.lblPanelMenuConnectionFrom.Size = new System.Drawing.Size(239, 20);
-            this.lblPanelMenuConnectionFrom.TabIndex = 10;
-            this.lblPanelMenuConnectionFrom.Text = "1. Подключение к искомой БД";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label4.Location = new System.Drawing.Point(3, 148);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(190, 40);
-            this.label4.TabIndex = 16;
-            this.label4.Text = "4.1. Выгрузка объектов \n в целевую БД";
-            this.label4.Visible = false;
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label5.Location = new System.Drawing.Point(3, 188);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(225, 20);
+            this.label5.TabIndex = 17;
+            this.label5.Text = "5. Выгрузка/загрузка данных";
+            this.label5.Visible = false;
             // 
             // test
             // 
@@ -149,5 +162,6 @@ namespace DBMigration
         private Label label2;
         private Label label1;
         private Label label4;
+        private Label label5;
     }
 }
