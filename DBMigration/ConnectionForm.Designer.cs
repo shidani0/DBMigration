@@ -57,6 +57,19 @@ namespace DBMigration
             this.label1 = new System.Windows.Forms.Label();
             this.lblPanelMenuConnectionFrom = new System.Windows.Forms.Label();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.button2 = new System.Windows.Forms.Button();
+            this.standart_checkBTN = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
             this.panelResizeMenu = new System.Windows.Forms.Panel();
             this.panelMenu.SuspendLayout();
@@ -252,6 +265,19 @@ namespace DBMigration
             // 
             this.panelContent.BackColor = System.Drawing.Color.White;
             this.panelContent.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelContent.Controls.Add(this.label6);
+            this.panelContent.Controls.Add(this.label7);
+            this.panelContent.Controls.Add(this.textBox1);
+            this.panelContent.Controls.Add(this.label8);
+            this.panelContent.Controls.Add(this.textBox2);
+            this.panelContent.Controls.Add(this.label9);
+            this.panelContent.Controls.Add(this.textBox3);
+            this.panelContent.Controls.Add(this.label10);
+            this.panelContent.Controls.Add(this.textBox4);
+            this.panelContent.Controls.Add(this.label11);
+            this.panelContent.Controls.Add(this.textBox5);
+            this.panelContent.Controls.Add(this.button2);
+            this.panelContent.Controls.Add(this.standart_checkBTN);
             this.panelContent.Controls.Add(this.label5);
             this.panelContent.Controls.Add(this.lblIp);
             this.panelContent.Controls.Add(this.txtIp);
@@ -270,6 +296,137 @@ namespace DBMigration
             this.panelContent.Name = "panelContent";
             this.panelContent.Size = new System.Drawing.Size(476, 544);
             this.panelContent.TabIndex = 1;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.label6.Location = new System.Drawing.Point(114, 237);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(247, 18);
+            this.label6.TabIndex = 23;
+            this.label6.Text = "Подключение к эталонной БД";
+            // 
+            // label7
+            // 
+            this.label7.Location = new System.Drawing.Point(14, 276);
+            this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(135, 23);
+            this.label7.TabIndex = 12;
+            this.label7.Text = "IP адрес:";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox1.Location = new System.Drawing.Point(150, 268);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(282, 26);
+            this.textBox1.TabIndex = 13;
+            // 
+            // label8
+            // 
+            this.label8.Location = new System.Drawing.Point(11, 306);
+            this.label8.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(135, 22);
+            this.label8.TabIndex = 14;
+            this.label8.Text = "Порт:";
+            // 
+            // textBox2
+            // 
+            this.textBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox2.Location = new System.Drawing.Point(150, 302);
+            this.textBox2.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(282, 26);
+            this.textBox2.TabIndex = 15;
+            // 
+            // label9
+            // 
+            this.label9.Location = new System.Drawing.Point(11, 337);
+            this.label9.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(135, 23);
+            this.label9.TabIndex = 16;
+            // 
+            // textBox3
+            // 
+            this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox3.Location = new System.Drawing.Point(150, 334);
+            this.textBox3.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(282, 26);
+            this.textBox3.TabIndex = 17;
+            // 
+            // label10
+            // 
+            this.label10.Location = new System.Drawing.Point(11, 366);
+            this.label10.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(135, 26);
+            this.label10.TabIndex = 18;
+            this.label10.Text = "Пользователь:";
+            // 
+            // textBox4
+            // 
+            this.textBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox4.Location = new System.Drawing.Point(150, 366);
+            this.textBox4.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.Size = new System.Drawing.Size(282, 26);
+            this.textBox4.TabIndex = 19;
+            // 
+            // label11
+            // 
+            this.label11.Location = new System.Drawing.Point(11, 398);
+            this.label11.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(135, 26);
+            this.label11.TabIndex = 20;
+            this.label11.Text = "Пароль:";
+            // 
+            // textBox5
+            // 
+            this.textBox5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox5.Location = new System.Drawing.Point(150, 398);
+            this.textBox5.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.textBox5.Name = "textBox5";
+            this.textBox5.PasswordChar = '*';
+            this.textBox5.Size = new System.Drawing.Size(282, 26);
+            this.textBox5.TabIndex = 21;
+            // 
+            // button2
+            // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(15, 430);
+            this.button2.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(454, 33);
+            this.button2.TabIndex = 22;
+            this.button2.Text = "Подключиться";
+            // 
+            // standart_checkBTN
+            // 
+            this.standart_checkBTN.Location = new System.Drawing.Point(15, 482);
+            this.standart_checkBTN.Name = "standart_checkBTN";
+            this.standart_checkBTN.Size = new System.Drawing.Size(243, 36);
+            this.standart_checkBTN.TabIndex = 3;
+            this.standart_checkBTN.Text = "Выбор файла эталонной бд";
+            this.standart_checkBTN.UseVisualStyleBackColor = true;
+            this.standart_checkBTN.Click += new System.EventHandler(this.standart_checkBTN_Click);
             // 
             // label5
             // 
@@ -319,5 +476,18 @@ namespace DBMigration
         private Label lblPanelMenuConnectionFrom;
         private Label label3;
         private Label label4;
+        private Label label6;
+        private Label label7;
+        private TextBox textBox1;
+        private Label label8;
+        private TextBox textBox2;
+        private Label label9;
+        private TextBox textBox3;
+        private Label label10;
+        private TextBox textBox4;
+        private Label label11;
+        private TextBox textBox5;
+        private Button button2;
+        private Button standart_checkBTN;
     }
 }

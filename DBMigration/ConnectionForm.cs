@@ -68,5 +68,38 @@ namespace DBMigration
             PosgreConnectionForm formPosgr = new PosgreConnectionForm();
             formPosgr.Show();
         }
+
+        private string GetCurrentConnectionString()
+        {
+            string ip = txtIp.Text;
+            string port = txtPort.Text;
+            string dbName = txtDbName.Text;
+            string user = txtUser.Text;
+            string password = txtPassword.Text;
+
+            return $"Server={ip},{port};Database={dbName};User Id={user};Password={password};TrustServerCertificate=True;";
+        }
+
+
+        private void standart_checkBTN_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Title = "Выберите эталонный файл",
+                Filter = "SQL Script Files (*.sql)|*.sql|All Files (*.*)|*.*"
+            };
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string referenceFilePath = openFileDialog.FileName;
+
+                // Переход к форме сравнения
+                CompareForm compareForm = new CompareForm(referenceFilePath, GetCurrentConnectionString());
+                compareForm.Show();
+
+                // (опционально) Скрыть текущую форму
+                this.Hide();
+            }
+        }
     }
 }
